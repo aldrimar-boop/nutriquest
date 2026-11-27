@@ -470,7 +470,8 @@ function runnerSVG(av,mood){
 const API_URL='https://script.google.com/macros/s/AKfycbwNuuQc6tRiUywK5Hl2xicRZMIHRAnt7wF3I38en3ZeBZnLX9N6lClTv_HzS-6Jahu6/exec';
 const API=(fn,...args)=>{
   if(window.google&&google.script&&google.script.run)return new Promise((res,rej)=>{google.script.run.withSuccessHandler(r=>r&&r.err?rej(r):res(r)).withFailureHandler(e=>rej({err:'Falha de conexão. Tente de novo.',raw:String(e)}))[fn](...args)});
-  return fetch(window.NQ_API||API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args}),redirect:'follow'})
+  const body=JSON.stringify({fn,args});
+  return fetch(window.NQ_API||API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body,redirect:'follow',keepalive:document.visibilityState==='hidden'&&body.length<60000})
     .catch(()=>{throw {err:'Falha de conexão. Verifique a internet e tente de novo.'}})
     .then(r=>r.json().catch(()=>({err:'O servidor respondeu de forma inesperada. Tente de novo.'})))
     .then(r=>{if(r&&r.err)throw r;return r});
@@ -480,22 +481,38 @@ function getToken(){try{return localStorage.getItem(TKEY)||''}catch{return ''}}
 function setToken(t){try{t?localStorage.setItem(TKEY,t):localStorage.removeItem(TKEY)}catch{}}
 /* ---------- persistência (privada) ---------- */
 const lsKey=()=>'nq3-'+(S.myId||'anon');
-function saveLocal(){try{localStorage.setItem(lsKey(),JSON.stringify({me:S.me,srs:S.srs}))}catch{}}
+function saveLocal(){try{localStorage.setItem(lsKey(),JSON.stringify({me:S.me,srs:S.srs,rq:RQ}))}catch{}}
 function loadLocal(id){try{return JSON.parse(localStorage.getItem('nq3-'+(id||'anon'))||'null')}catch{return null}}
 const SRVKEYS=['elig','eligC','bonus','bonusC','log'];
 const dirty=new Set();let flushT=null,flushing=false;
-function markDirty(k){dirty.add(k);saveLocal();if(S.token)setSync('saving');clearTimeout(flushT);flushT=setTimeout(flush,1200)}
+const RQ=[];S.inflight=0;
+let flushAt=0;function schedFlush(ms){const at=Date.now()+ms;if(flushT&&flushAt<=at)return;clearTimeout(flushT);flushAt=at;flushT=setTimeout(()=>{flushT=null;flush()},ms)}
+function markDirty(k){dirty.add(k);saveLocal();if(S.token){setSync('saving');schedFlush(8000)}}
+function queueReview(id){
+  if(!S.token)return;const now=Date.now();RQ.push({id,ts:now});
+  S.me.elig=(S.me.elig||0)+1;if(now<examMs())S.me.eligC=(S.me.eligC||0)+1;
+  saveLocal();setSync('saving');schedFlush(8000);
+}
 async function flush(){
-  if(flushing||!S.token)return;flushing=true;let failed=false;if(dirty.size)setSync('saving');
-  while(dirty.size){const k=dirty.values().next().value;dirty.delete(k);
-    let data;if(k==='me'){data={...S.me};SRVKEYS.forEach(x=>delete data[x])}else data={c:S.srs[k.slice(4)],rev:S.me.rev};
-    try{await API('apiSave',S.token,k,JSON.stringify(data))}
-    catch(e){dirty.add(k);failed=true;console.warn('falha ao salvar',k,e);if(/Sessão expirada/.test(e.err||'')){logout(true)}break}}
-  flushing=false;if(S.token){setSync(failed?'error':'saved');if(failed){clearTimeout(flushT);flushT=setTimeout(flush,6000)}}
+  if(flushing||!S.token||(!dirty.size&&!RQ.length))return;flushing=true;
+  const keys=[...dirty];dirty.clear();const revs=RQ.splice(0,RQ.length);S.inflight=revs.length;
+  const saves=keys.map(k=>{let data;if(k==='me'){data={...S.me};SRVKEYS.forEach(x=>delete data[x])}else data={c:S.srs[k.slice(4)],rev:S.me.rev};return {part:k,json:JSON.stringify(data)}});
+  setSync('saving');let failed=false;
+  try{
+    const r=await API('apiBatch',S.token,{reviews:revs,saves});
+    const before=kmOf(S.me);S.inflight=0;applySrv(r.srv);
+    for(const c of r.credited||[]){if(!S.byId[c.id])continue;const st=get(c.id);st.cr=c.ts;S.srs[c.id.split('-')[0]][c.id]=pack(st);dirty.add('srs-'+c.id.split('-')[0])}
+    saveLocal();afterKm(before);if(S.sess&&$('kmLine'))$('kmLine').textContent=kmLineText();
+  }catch(e){
+    failed=true;S.inflight=0;keys.forEach(k=>dirty.add(k));RQ.unshift(...revs);saveLocal();console.warn('falha ao salvar',e);
+    if(/Sessão expirada/.test(e.err||'')){RQ.length=0;dirty.clear();logout(true);flushing=false;return}
+  }
+  flushing=false;
+  if(S.token){setSync(failed?'error':(dirty.size||RQ.length)?'saving':'saved');if(failed)schedFlush(6000);else if(dirty.size||RQ.length)schedFlush(4000)}
 }
 window.addEventListener('pagehide',()=>{saveLocal()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){saveLocal();flush()}});
-function applySrv(srv){if(!srv)return;const before=kmOf(S.me);S.me.elig=srv.elig;S.me.eligC=srv.eligC;S.me.bonus=srv.bonus;S.me.bonusC=srv.bonusC;S.me.log=srv.log||{};return before}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveLocal();clearTimeout(flushT);flushT=null;flush()}});
+function applySrv(srv){if(!srv)return;const before=kmOf(S.me);const pend=RQ.length+(S.inflight||0);S.me.elig=srv.elig+pend;S.me.eligC=srv.eligC+(Date.now()<examMs()?pend:0);S.me.bonus=srv.bonus;S.me.bonusC=srv.bonusC;S.me.log=srv.log||{};return before}
 async function loadAccount(){
   S.token=getToken();
   if(!S.token){const loc=loadLocal('anon');if(loc){S.me={...defMe(),...loc.me};for(const s of SUBJ)S.srs[s.id]={...(loc.srs&&loc.srs[s.id]||{})}}return}
@@ -504,6 +521,7 @@ async function loadAccount(){
     const remote={me:JSON.parse(r.progress.me||'{}'),srs:{}};let rrev=remote.me.rev|0;
     SUBJ.forEach(s=>{const j=JSON.parse(r.progress['srs-'+s.id]||'{}');remote.srs[s.id]=j.c||{}});
     const loc=loadLocal(r.id);
+    if(loc&&Array.isArray(loc.rq)&&loc.rq.length&&!RQ.length){RQ.push(...loc.rq.filter(x=>x&&x.id));}
     const useLoc=loc&&(loc.me&&loc.me.rev|0)>rrev;
     const pick=useLoc?loc:remote;
     S.me={...defMe(),...pick.me};for(const s of SUBJ)S.srs[s.id]={...(pick.srs[s.id]||{})};
@@ -523,19 +541,8 @@ function logout(expired){
 
 /* ---------- quilômetros (calculados no servidor) ---------- */
 function afterKm(before){
-  const k=kmOf(S.me);if(before!=null&&k>before){if(Math.floor(k)>Math.floor(before))toast(`Você completou ${Math.floor(k)} km! Seu corredor avançou.`);clearTimeout(S.rbT);S.rbT=setTimeout(refreshBoard,2500)}
+  const k=kmOf(S.me);if(before!=null&&k>before){if(Math.floor(k)>Math.floor(before))toast(`Você completou ${Math.floor(k)} km! Seu corredor avançou.`);clearTimeout(S.rbT);S.rbT=setTimeout(refreshBoard,6000)}
   renderHeader();
-}
-const RQ=[];let rqBusy=false;
-function queueReview(id){if(!S.token)return;RQ.push(id);pumpReviews()}
-async function pumpReviews(){
-  if(rqBusy)return;rqBusy=true;
-  while(RQ.length){const id=RQ.shift();
-    try{const r=await API('apiReview',S.token,id);const before=applySrv(r.srv);
-      if(r.credited){const c=get(id);c.cr=r.ts;S.srs[id.split('-')[0]][id]=pack(c);markDirty('srs-'+id.split('-')[0])}
-      afterKm(before);if(S.sess&&$('kmLine'))$('kmLine').textContent=kmLineText()}
-    catch(e){if(/Sessão expirada/.test(e.err||'')){RQ.length=0;logout(true);break}setSync('error');RQ.unshift(id);await new Promise(r=>setTimeout(r,4000))}}
-  rqBusy=false;
 }
 function kmLineText(){return S.token?`cada carta elegível vale +0,1 km · você tem ${fmtKm(kmOf(S.me))}`:'entre na sua conta para ganhar km'}
 
@@ -576,7 +583,7 @@ function nextCard(){
       <h2>Sessão concluída</h2><p>${s.done} avaliações em ${new Set(s.credited).size} cartas elegíveis. ${km>0?`Você conquistou <b>+${fk(km)} km</b>.`:'Nenhum km novo nesta sessão: as cartas já tinham contado nas últimas 20 h ou a confirmação do servidor ainda está chegando.'}</p>
       <p class="note">Autoavaliação: Errei ${r[1]} · Difícil ${r[2]} · Bom ${r[3]} · Fácil ${r[4]}. Isso orienta as próximas revisões, não é uma nota.</p>
       <div class="btns"><button type="button" id="sDone">Voltar</button></div></div></div>`;
-    $('sDone').onclick=()=>closeSession(false);return;
+    $('sDone').onclick=()=>{closeSession(false);clearTimeout(flushT);flushT=null;flush()};return;
   }
   const id=s.queue[0];const card=S.byId[id];
   if(!card){s.queue.shift();return nextCard()}
@@ -595,7 +602,7 @@ function nextCard(){
     <div class="rates" id="rates" hidden></div>`;
   fitFlip();
   $('front').onclick=reveal;$('reveal').onclick=e=>{e.stopPropagation();reveal()};
-  $('sPause').onclick=()=>{S.me.rev++;markDirty('me');flush();closeSession(true);toast('Sessão salva. Continue quando quiser.')};
+  $('sPause').onclick=()=>{S.me.rev++;markDirty('me');clearTimeout(flushT);flushT=null;flush();closeSession(true);toast('Sessão salva. Continue quando quiser.')};
 }
 function fitFlip(){const f=$('flip');if(!f)return;const h=Math.max($('front').scrollHeight,$('back').scrollHeight,360);f.style.minHeight=Math.min(h,window.innerHeight*1.6)+'px'}
 function reveal(){
