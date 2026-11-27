@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1b1f27">
+<meta name="description" content="NutriQuest — Corrida do Conhecimento: flashcards com repetição espaçada, cálculos em nutrição esportiva e ranking da turma.">
+<title>NutriQuest — Corrida do Conhecimento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: esportivo e direto, como o painel de uma prova de atletismo; respeitoso com quem está com dificuldade
+   IDEA: a pista de atletismo da turma, com raias, marcações de km e cenários que mudam a cada trecho
+   PICTURE: a própria pista com os corredores animados, larga, logo abaixo do topo; no estudo, a carta que vira em 3D
+   COLOUR and TYPE: vermelho de pista como dominante, branco das raias, grafite como apoio, cores fixas nas notas; Barlow Condensed (números de peito) + Barlow
+   LAYOUT: topo com navegação em abas; cada aba é uma faixa; sessão de estudo ocupa a tela inteira */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f4f7,#0e1116);--card:light-dark(#fff,#171b23);--ink:light-dark(#151922,#eef1f6);--mute:light-dark(#596173,#a3abbb);
+--line:light-dark(#dde1ea,#2a3040);--track:#c8452c;--track2:#b63c25;--chip:light-dark(#eef0f5,#222837);
+--r1:#d93a3a;--r2:#ef8a17;--r3:#22a05a;--r4:#2f6fe4}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Barlow,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Barlow Condensed",Barlow,sans-serif;line-height:1.05;margin:0;text-wrap:balance;letter-spacing:.01em}
+button,input,select,textarea{font:inherit;font-size:16px}
+button{min-height:44px;border-radius:12px;border:0;padding:0 16px;font-weight:700;cursor:pointer;background:var(--track);color:#fff}
+button.sec{background:var(--chip);color:var(--ink)}button.ghost{background:transparent;color:inherit;border:2px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--r4);outline-offset:2px}
+input,select,textarea{min-height:44px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);padding:0 12px;width:100%}
+textarea{padding:10px 12px;min-height:90px}
+label{font-weight:700;font-size:14px;display:grid;gap:4px}
+.top{background:#1b1f27;color:#fff;padding:14px max(4vw,14px) 0;position:sticky;top:0;z-index:20}
+.top .row{max-width:1240px;margin:auto;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between}
+.brand{font:800 26px/1 "Barlow Condensed"}.brand span{color:#ff8b6e}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{background:rgba(255,255,255,.1);border-radius:999px;padding:4px 12px;font-weight:700;white-space:nowrap;font-size:15px}
+nav{max-width:1240px;margin:10px auto 0;display:flex;gap:4px;overflow-x:auto}
+nav a{flex:none;color:#cfd5e2;text-decoration:none;padding:10px 14px;font-weight:700;border-radius:10px 10px 0 0;white-space:nowrap;min-height:44px;display:flex;align-items:center}
+nav a[aria-current=page]{background:var(--bg);color:var(--ink)}
+.band{padding:clamp(20px,3vw,40px) max(4vw,14px)}.inner{max-width:1240px;margin:auto}
+.band h2{font-size:clamp(28px,3.4vw,40px)}
+.lead{color:var(--mute);margin:6px 0 16px;max-width:72ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.note{font-size:14px;color:var(--mute)}.small{font-size:14px}
+.msg{font-weight:700;min-height:1.4em;margin:6px 0}.err{color:var(--r1)}.ok{color:var(--r3)}
+[hidden]{display:none!important}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}.flow span{background:var(--chip);border-radius:8px;padding:4px 8px;font-weight:700}.flow i{color:var(--mute);font-style:normal;padding:0 4px}
+.keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.keys button{min-height:44px;padding:0;font-size:18px}
+code{font-family:ui-monospace,Menlo,monospace;background:var(--chip);border-radius:6px;padding:2px 6px}
+/* pista */
+.raceinfo{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.raceinfo .panel{padding:10px 14px;flex:1 1 200px}
+.raceinfo b{font:800 24px "Barlow Condensed";display:block}
+.trackwrap{border-radius:18px;overflow:auto;max-height:520px;background:#1b1f27;position:relative;border:1px solid var(--line)}
+.track{position:relative}
+.zone{position:absolute;top:0;height:86px;overflow:hidden}
+.zone .zn{position:absolute;left:8px;top:6px;font:800 14px "Barlow Condensed";color:rgba(0,0,0,.6);background:rgba(255,255,255,.7);padding:1px 8px;border-radius:99px;white-space:nowrap}
+.zone.dark .zn{color:#fff;background:rgba(0,0,0,.35)}
+.lanes{position:absolute;left:0;right:0;top:86px;background:repeating-linear-gradient(180deg,var(--track) 0 54px,#fff 54px 56px)}
+.km{position:absolute;top:86px;bottom:0;border-left:2px dashed rgba(255,255,255,.55)}
+.km span{position:absolute;top:2px;left:4px;font:800 13px "Barlow Condensed";color:#fff;white-space:nowrap}
+.start{position:absolute;top:86px;bottom:0;width:8px;background:repeating-linear-gradient(180deg,#fff 0 8px,#111 8px 16px)}
+.rnr{position:absolute;width:44px;height:54px;transition:left 1.6s cubic-bezier(.4,.1,.3,1);z-index:2}
+.rnr svg{width:44px;height:50px;position:absolute;bottom:0}
+.rnr .tag{position:absolute;bottom:52px;left:50%;transform:translateX(-50%);background:rgba(20,22,30,.85);color:#fff;font-size:12px;font-weight:700;padding:0 6px;border-radius:6px;white-space:nowrap;line-height:18px}
+.rnr.me .tag{background:#fff;color:#151922;box-shadow:0 0 0 2px #ffd34d}
+.rnr .pos{font:800 12px "Barlow Condensed";color:#ffd34d;margin-right:4px}
+.rnr.ovt::before{content:"";position:absolute;right:38px;top:16px;width:46px;height:22px;background:repeating-linear-gradient(180deg,rgba(255,255,255,.9) 0 2px,transparent 2px 6px);animation:speed .5s linear 4}
+.rnr.ovt svg{filter:drop-shadow(0 0 6px #ffd34d)}
+@keyframes speed{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-18px)}}
+/* corredor animado */
+.rn .lf,.rn .lb,.rn .af,.rn .ab{transform-box:view-box}
+.rn .lf,.rn .lb{transform-origin:20px 29px}.rn .af,.rn .ab{transform-origin:20px 18px}
+.rn .lf{animation:sw .62s ease-in-out infinite alternate}.rn .lb{animation:sw .62s ease-in-out infinite alternate-reverse}
+.rn .af{animation:swa .62s ease-in-out infinite alternate-reverse}.rn .ab{animation:swa .62s ease-in-out infinite alternate}
+.rn .bd{animation:bob .31s ease-in-out infinite alternate;transform-box:view-box;transform-origin:20px 44px}
+.run .rn .lf,.run .rn .lb,.run .rn .af,.run .rn .ab{animation-duration:.24s}.run .rn .bd{animation-duration:.12s}
+@keyframes sw{from{transform:rotate(-30deg)}to{transform:rotate(30deg)}}
+@keyframes swa{from{transform:rotate(-40deg)}to{transform:rotate(40deg)}}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
+.m-cansado .bd{rotate:6deg}.m-fraco .bd{rotate:10deg}.m-exausto .bd{rotate:14deg}
+.m-cansado .lf,.m-cansado .lb,.m-cansado .af,.m-cansado .ab{animation-duration:.9s}
+.m-fraco .lf,.m-fraco .lb,.m-fraco .af,.m-fraco .ab{animation-duration:1.2s}
+.m-exausto .lf,.m-exausto .lb,.m-exausto .af,.m-exausto .ab{animation-duration:1.8s}
+.m-recuperacao .lf,.m-recuperacao .lb,.m-recuperacao .af,.m-recuperacao .ab,.m-recuperacao .bd{animation:none}
+.m-recuperacao .lf{transform:rotate(-80deg)}.m-recuperacao .lb{transform:rotate(-70deg)}
+.m-recuperacao .bd{transform:translateY(8px)}
+.hit{animation:hit .5s}.cheer{animation:cheer .6s}
+@keyframes hit{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px) rotate(-6deg)}40%{transform:translateX(6px) rotate(5deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+@keyframes cheer{0%,100%{transform:translateY(0)}40%{transform:translateY(-16px) scale(1.05)}}
+.stars{position:absolute;inset:0;pointer-events:none;opacity:0}.hit .stars{animation:st .7s}
+@keyframes st{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-14px)}}
+/* ranking */
+table{width:100%;border-collapse:collapse}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:13px;color:var(--mute);font-weight:700}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr.me td{background:light-dark(#fff6d6,#2a2612)}
+.av{width:34px;height:40px;display:block}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:10px;max-width:640px;margin:16px auto 0}
+.podium .st{text-align:center}.podium svg{width:clamp(56px,10vw,86px);height:auto}
+.podium .blk{background:var(--track);color:#fff;border-radius:14px 14px 0 0;font:800 36px "Barlow Condensed";padding:8px}
+.podium .p1 .blk{height:150px}.podium .p2 .blk{height:110px}.podium .p3 .blk{height:80px}
+.podium .who{font-weight:700;overflow-wrap:anywhere}
+/* estudo */
+.subj{border-left:6px solid var(--c);display:grid;gap:8px}
+.subj h3{font-size:22px}.nums{display:flex;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--mute)}.nums b{color:var(--ink);font-size:16px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.btns button{flex:1 1 auto}
+.kmhint{font-size:12px;font-weight:700;opacity:.85;display:block;line-height:1.1}
+button .kmhint{margin-top:-2px}
+.bar{height:10px;border-radius:99px;background:var(--chip);overflow:hidden}.bar i{display:block;height:100%;background:var(--c,var(--track));border-radius:99px}
+.banner{border-radius:16px;padding:14px 16px;background:light-dark(#fff1e6,#2c1d10);border:1px solid #ef8a17;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+/* sessão */
+#sess{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding:14px max(4vw,14px) 30px}
+.sbar{max-width:860px;margin:0 auto 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.sbar .grow{flex:1 1 200px}
+.scene{max-width:860px;margin:auto;perspective:1600px}
+.flip{position:relative;transition:transform .7s cubic-bezier(.3,.7,.2,1);transform-style:preserve-3d;min-height:360px}
+.flip.on{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:12px;overflow:auto}
+.face.back{transform:rotateY(180deg)}
+.face .tagl{font-size:13px;font-weight:700;color:var(--mute);display:flex;gap:8px;flex-wrap:wrap}
+.face .tagl span{background:var(--chip);border-radius:99px;padding:2px 10px}
+.face .q{font:700 clamp(22px,3vw,30px)/1.2 Barlow;flex:1;display:flex;align-items:center}
+.face.front{cursor:pointer}
+.ans p{margin:0 0 10px}.ans .nt{font-size:14px;color:var(--mute);border-left:3px solid var(--line);padding-left:10px}
+.ans table{font-size:14px;margin:6px 0 12px}.ans td,.ans th{border:1px solid var(--line)}
+.ans .scroll{overflow-x:auto}
+.rates{max-width:860px;margin:14px auto 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rates button{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.1}
+.rates small{font-weight:500;font-size:13px;opacity:.95}
+.rates .g1{background:var(--r1)}.rates .g2{background:var(--r2)}.rates .g3{background:var(--r3)}.rates .g4{background:var(--r4)}
+@media(max-width:560px){.rates{grid-template-columns:repeat(2,minmax(0,1fr))}.face{padding:18px}}
+.mini{display:flex;align-items:center;gap:8px}.mini svg{width:46px;height:52px;position:relative}
+.vbar{width:120px;height:10px;border-radius:99px;background:var(--chip);overflow:hidden}.vbar i{display:block;height:100%;border-radius:99px;transition:width .5s}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;background:#1b1f27;color:#fff;border-radius:14px;padding:12px 18px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:calc(100% - 24px);text-align:center}
+.related{font-size:14px;border-top:1px dashed var(--line);padding-top:8px}
+/* painel */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.tile b{display:block;font:800 30px/1.1 "Barlow Condensed"}.tile span{font-size:13px;color:var(--mute)}
+.comp{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.comp .big{width:140px;height:160px;position:relative}.comp .big svg{width:140px;height:160px}
+.scroll{overflow-x:auto}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}}
+/* quiz */
+.qz{display:grid;gap:12px}.qz fieldset{border:1px solid var(--line);border-radius:14px;padding:12px;margin:0}
+.qz legend{font-weight:700;padding:0 6px}
+.opt{display:flex;gap:10px;align-items:center;padding:6px 4px;cursor:pointer}.opt input{width:20px;min-height:20px;flex:none}
+.right{color:var(--r3);font-weight:700}.wrong{color:var(--r1);font-weight:700}
+.pick{display:flex;flex-wrap:wrap;gap:6px}.pick button{width:40px;height:40px;min-height:40px;padding:0;border-radius:50%;border:3px solid transparent}
+.pick button[aria-pressed=true]{border-color:var(--r4)}
+.join{display:grid;gap:12px;max-width:720px}
+.prev{display:flex;gap:14px;align-items:center}.prev svg{width:80px;height:92px}
+details.admin summary{font:800 22px "Barlow Condensed";cursor:pointer;min-height:44px;display:flex;align-items:center}
+.list div{display:flex;gap:8px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;flex-wrap:wrap}
+.list div span{flex:1 1 220px}.list button{min-height:36px;padding:0 12px;font-size:14px}
+.player{display:grid;gap:10px}.transcript{background:var(--chip);border-radius:14px;padding:12px;max-height:240px;overflow:auto;white-space:pre-line}
+nav a svg{display:none}nav .sm{display:none}
+@media(hover:none){.kbd{display:none}}
+@media(max-width:700px){
+ .top{position:static;padding:10px 14px 10px;padding-top:max(10px,env(safe-area-inset-top))}
+ .brand{font-size:22px}.brand span{display:none}.pill{font-size:13px;padding:3px 10px}
+ nav{position:fixed;left:0;right:0;bottom:0;margin:0;z-index:30;background:#1b1f27;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:4px 4px calc(4px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(0,0,0,.2);overflow:visible}
+ nav a{flex-direction:column;justify-content:center;gap:2px;font-size:11px;padding:6px 0;border-radius:10px;min-height:54px;text-align:center}
+ nav a svg{display:block;width:22px;height:22px}nav .lg{display:none}nav .sm{display:inline}
+ nav a[aria-current=page]{background:rgba(255,255,255,.14);color:#fff}
+ body{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+ .toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+ .band{padding:18px 14px}
+ .raceinfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.raceinfo .panel{padding:8px 10px}.raceinfo b{font-size:18px}
+ .trackwrap{max-height:420px;border-radius:14px}
+ #sess{padding:10px 10px 0;padding-top:max(10px,env(safe-area-inset-top))}
+ .sbar{gap:6px;margin-bottom:8px}.sbar .note{font-size:12px}.sbar button{min-height:40px;padding:0 12px;font-size:14px}
+ .mini svg{width:34px;height:40px}.vbar{width:80px}
+ .face{padding:16px;border-radius:18px}.face .q{font-size:22px}.flip{min-height:300px}
+ .rates{position:sticky;bottom:0;background:var(--bg);margin:10px -10px 0;padding:8px 10px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 14px rgba(0,0,0,.08)}
+ .rates button{min-height:58px}
+ .citem .grid label[style*="span 2"]{grid-column:auto!important}
+ .keys button{min-height:48px}
+ .comp .big,.comp .big svg{width:110px;height:126px}
+ .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile b{font-size:24px}
+ .podium .blk{font-size:28px}
+}
+@media(prefers-reduced-motion:reduce){.rn *{animation:none!important}.rnr{transition:none}.flip{transition:none}.hit,.cheer{animation:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="top"><div class="row">
+  <div class="brand">NutriQuest <span>· Corrida do Conhecimento</span></div>
+  <div class="chips"><span class="pill" id="hSync" hidden></span><span class="pill" id="hKm">0 km</span><span class="pill" id="hClock">carregando…</span></div>
+</div>
+<nav aria-label="Seções">
+  <a href="#corrida" data-v="corrida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c4 0 4-12 8-12s4 12 8 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="6" r="2" fill="currentColor"/></svg><span class="lg">Corrida</span><span class="sm">Corrida</span></a><a href="#estudar" data-v="estudar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="lg">Estudar</span><span class="sm">Estudar</span></a><a href="#painel" data-v="painel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11M12 19V5M19 19v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="lg">Meu painel</span><span class="sm">Painel</span></a><a href="#audio" data-v="audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 14v-2a7 7 0 0 1 14 0v2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="4" y="13" width="4" height="6" rx="1.5" fill="currentColor"/><rect x="16" y="13" width="4" height="6" rx="1.5" fill="currentColor"/></svg><span class="lg">Audioaulas</span><span class="sm">Áudio</span></a><a href="#calculos" data-v="calculos"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span class="lg">Cálculos</span><span class="sm">Cálculos</span></a><a href="#simulado" data-v="simulado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lg">Simulado</span><span class="sm">Simulado</span></a>
+</nav></header>
+
+<main>
+<section class="band" id="v-corrida"><div class="inner">
+  <section id="podiumBox" class="panel" hidden style="margin-bottom:16px"><h2>Pódio final</h2><p class="lead" style="margin:4px 0 0">A competição foi encerrada no horário da prova. A classificação está congelada; o estudo continua liberado.</p><div class="podium" id="podium"></div></section>
+  <h2 id="raceTitle">Pista da turma</h2>
+  <p class="lead" id="raceLead">Cada corredor avança conforme os quilômetros conquistados estudando. A pista cresce junto com quem está na frente e se atualiza a cada 20 segundos.</p>
+  <div class="raceinfo" id="raceInfo"></div>
+  <div class="trackwrap" id="trackWrap"><div class="track" id="track"><div style="color:#fff;padding:40px;text-align:center" id="trackMsg">Carregando a pista…</div></div></div>
+  <div id="joinBox" style="margin-top:18px"></div>
+  <h2 style="margin-top:26px;font-size:30px">Classificação geral</h2>
+  <p class="note" id="rankNote">Critério: quilômetros. Empates dividem a mesma posição.</p>
+  <div class="panel scroll" style="padding:4px 8px"><table class="stack" id="rank"><thead><tr><th class="n">Pos.</th><th>Corredor</th><th>Nome</th><th class="n">Km</th><th class="n">Atrás do líder</th></tr></thead><tbody></tbody></table></div>
+</div></section>
+
+<section class="band" id="v-estudar" hidden><div class="inner">
+  <div id="recBanner"></div>
+  <div id="resume"></div>
+  <h2>Preparação intensiva</h2>
+  <p class="lead">A fila segue esta prioridade: cartas que voltam ainda nesta sessão, erros, revisões vencidas, difíceis, cartas novas das matérias com menor domínio e, por fim, revisões antecipadas (agendadas para depois da prova). Cada carta elegível vale +0,1 km (10 cartas = 1 km), qualquer que seja a nota.</p>
+  <div class="panel" style="margin-bottom:14px"><div class="btns" id="intBtns"></div></div>
+  <div class="grid" style="margin-bottom:18px">
+    <div class="panel"><h3 style="font-size:22px">Revisões</h3><div class="btns" style="margin-top:8px" id="revBtns"></div></div>
+    <div class="panel"><h3 style="font-size:22px">Sessão personalizada</h3>
+      <form id="custom" style="display:grid;gap:8px;margin-top:8px">
+        <label>Quantidade de cartas<input id="cuN" type="number" min="1" max="569" value="15"></label>
+        <label>Tipo<select id="cuMode"><option value="intensive">Prioridade intensiva (inclui antecipadas)</option><option value="due">Só revisões vencidas</option><option value="new">Só cartas novas</option><option value="errors">Só erros</option><option value="hard">Só difíceis</option></select></label>
+        <div id="cuSubs" style="display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14px"></div>
+        <button type="submit">Começar</button><p class="note" id="cuHint" style="margin:0"></p>
+      </form></div>
+    <div class="panel"><h3 style="font-size:22px">Laboratório de cálculos</h3>
+      <p class="small">Aprenda a calcular MG, MLG, GEE, GER, GET, BE e DE com os casos de Mariana, Lucas e Beatriz.</p><a href="#calculos" style="font-weight:700">Abrir a aba Cálculos →</a></div>
+  </div>
+  <h2 style="font-size:30px">Estudo por matéria</h2>
+  <p class="lead">Sessões só com as cartas da matéria, na mesma ordem de prioridade.</p>
+  <div class="grid" id="subjGrid"></div>
+</div></section>
+
+<section class="band" id="v-painel" hidden><div class="inner">
+  <h2>Meu painel</h2>
+  <p class="lead">Seu estado de estudo, sua vitalidade e seus erros ficam visíveis só para você. Para a turma aparecem apenas nome, corredor e quilômetros.</p>
+  <div class="panel comp" id="compBox" style="margin-bottom:14px"></div>
+  <div class="tiles" id="tiles"></div>
+  <p class="note">Conteúdo estudado = cartas vistas pelo menos uma vez. Domínio estimado = média da retenção prevista pelo FSRS, que se baseia nas suas autoavaliações (não é nota de prova).</p>
+  <h3 style="font-size:24px;margin-top:18px">Por matéria</h3>
+  <div class="panel scroll" style="padding:4px 8px"><table class="stack" id="subjTable"><thead><tr><th>Matéria</th><th class="n">Total</th><th class="n">Estudadas</th><th class="n">Não estudadas</th><th class="n">Pendentes</th><th class="n">Erradas</th><th class="n">Difíceis</th><th class="n">Domínio est.</th></tr></thead><tbody></tbody></table></div>
+  <div id="leaveBox" style="margin-top:14px"></div>
+</div></section>
+
+<section class="band" id="v-audio" hidden><div class="inner">
+  <h2>Audioaulas</h2>
+  <p class="lead">Narração em português de todas as perguntas e respostas de cada matéria, na ordem do material, com a voz do seu aparelho. Concluir uma audioaula pela primeira vez vale +1 km.</p>
+  <div class="panel" id="ttsWarn" style="margin-bottom:12px"></div>
+  <div class="panel player" id="player" hidden></div>
+  <div class="grid" id="audioGrid" style="margin-top:12px"></div>
+</div></section>
+
+
+<section class="band" id="v-calculos" hidden><div class="inner">
+  <h2>Como calcular em Nutrição Esportiva</h2>
+  <p class="lead">As fórmulas estarão disponíveis na prova. O objetivo é reconhecer o que cada uma calcula, quais dados usar, em que ordem trabalhar e como interpretar o resultado. Não é preciso decorar equações que estimam a mesma variável. Base: Aula 8 e casos clínicos 1 a 3 do professor Caio Fábio Leonor.</p>
+  <div class="grid" style="margin-bottom:14px">
+    <div class="panel"><h3 style="font-size:22px">Siglas</h3><div class="scroll"><table class="small"><tbody>
+      <tr><th>MG / MLG</th><td>Massa de gordura / massa livre de gordura (kg)</td></tr>
+      <tr><th>IE</th><td>Ingestão energética: energia consumida (kcal/dia)</td></tr>
+      <tr><th>MET / GEE</th><td>Equivalente metabólico / gasto energético do exercício (kcal)</td></tr>
+      <tr><th>GER / GEB</th><td>Gasto energético de repouso / basal (kcal/dia); condições de medida diferentes</td></tr>
+      <tr><th>FA / GET</th><td>Fator de atividade (sem unidade) / gasto energético total (kcal/dia)</td></tr>
+      <tr><th>BE / DE</th><td>Balanço energético (kcal/dia) / disponibilidade energética (kcal/kg MLG/dia)</td></tr>
+      <tr><th>BDE / REDs</th><td>Baixa disponibilidade energética / deficiência energética relativa no esporte</td></tr></tbody></table></div></div>
+    <div class="panel" style="display:grid;gap:8px;align-content:start"><h3 style="font-size:22px">A ordem depende do que a questão pede</h3>
+      <div class="flow"><span>Dados do atleta</span>→<span>MG</span>→<span>MLG</span><i>|</i><span>MET</span>→<span>GEE</span></div>
+      <div class="flow"><b>Para GET e BE:</b><span>GER</span>→<span>GET</span>→<span>BE</span></div>
+      <div class="flow"><b>Para DE:</b><span>IE + GEE + MLG</span>→<span>DE</span>→<span>interpretação</span></div>
+      <p class="small" style="margin:0"><b>Atalho:</b> se a prova pedir só a DE, basta calcular MLG e GEE (se não vierem prontos) e usar a IE. Não precisa passar por GER, GET ou BE. Se a MLG já estiver em kg, não precisa calcular a MG.</p>
+      <p class="small" style="margin:0"><b>Não confunda:</b> o BE responde quanto a ingestão excede ou fica abaixo do gasto total; a DE, quanta energia resta após o exercício por kg de MLG.</p></div>
+    <div class="panel" style="display:grid;gap:8px;align-content:start"><h3 style="font-size:22px">Calculadora</h3>
+      <input id="calcIn" inputmode="decimal" placeholder="ex.: 484,264 + 22,771 × 46,4" autocomplete="off" aria-label="Expressão">
+      <div class="keys"><button type="button" class="sec" data-key="7">7</button><button type="button" class="sec" data-key="8">8</button><button type="button" class="sec" data-key="9">9</button><button type="button" class="sec" data-key="÷">÷</button><button type="button" class="sec" data-key="4">4</button><button type="button" class="sec" data-key="5">5</button><button type="button" class="sec" data-key="6">6</button><button type="button" class="sec" data-key="×">×</button><button type="button" class="sec" data-key="1">1</button><button type="button" class="sec" data-key="2">2</button><button type="button" class="sec" data-key="3">3</button><button type="button" class="sec" data-key="−">−</button><button type="button" class="sec" data-key="0">0</button><button type="button" class="sec" data-key=",">,</button><button type="button" class="sec" data-key="(">(</button><button type="button" class="sec" data-key=")">)</button><button type="button" class="sec" data-key="C">C</button><button type="button" class="sec" data-key="⌫">⌫</button><button type="button" class="sec" data-key="+">+</button><button type="button" class="sec" data-key="=">=</button></div><p class="msg" id="calcOut" aria-live="polite"></p>
+      <p class="note" style="margin:0">Ajuda nas contas; não resolve o caso por você. Aceita vírgula decimal, × ÷ + − e parênteses.</p></div>
+  </div>
+  <details class="panel" style="margin-bottom:14px"><summary style="font:800 22px 'Barlow Condensed';cursor:pointer;min-height:44px;display:flex;align-items:center">Banco de fórmulas (como na prova)</summary>
+    <div class="grid" id="calcForm" style="margin-top:8px"></div>
+    <p class="note">Henry e Rees, De Lorenzo e Schofield também são estimativas basais/de repouso; ficam fora do roteiro principal porque não são exigidas nos três casos.</p></details>
+  <h3 style="font-size:28px">Casos clínicos</h3>
+  <p class="lead" style="margin-top:4px">Comece por Mariana (passo a passo). Depois resolva Lucas e Beatriz sozinho(a). As respostas são corrigidas com tolerância de arredondamento; a vírgula decimal é aceita.</p>
+  <div class="btns" id="calcTabs" style="margin-bottom:12px"></div>
+  <div style="display:grid;gap:12px" id="calcCase"></div>
+  <label style="margin-top:12px">Rascunho (salvo automaticamente)<textarea id="calcDraft" style="min-height:140px"></textarea></label>
+  <p class="note">Gabaritos de Lucas e Beatriz conferidos matematicamente: todos os valores do material batem. Os valores de GET e DE seguem as convenções dos exercícios, com as ressalvas do professor sobre o GEE bruto e a possível dupla contagem com o FA.</p>
+</div></section>
+
+<section class="band" id="v-simulado" hidden><div class="inner">
+  <h2>Simulado</h2>
+  <p class="lead">Atividade complementar com questões objetivas, corrigidas ao final. O estudo principal continua sendo os flashcards.</p>
+  <div class="grid" id="simGrid"></div>
+  <div class="panel" id="quiz" hidden style="margin-top:14px"></div>
+</div></section>
+</main>
+
+<section id="sess" hidden aria-live="polite"></section>
+<div class="toast" id="toast" hidden></div>
+<script>
+/*CORE-START*/
+const MIN=60e3,HOUR=36e5,DAY=864e5;
+/* FSRS-4.5 (parâmetros padrão) com retenção desejada mais alta para a semana da prova */
+const W=[0.4872,1.4003,3.7145,13.8206,5.1618,1.2298,0.8975,0.031,1.6474,0.1367,1.0461,2.1072,0.0793,0.3246,1.587,0.2272,2.8755];
+const DECAY=-0.5,FACTOR=19/81,DR=0.95,MAXIVL=365;
+const clampD=d=>Math.min(10,Math.max(1,d));
+const D0=g=>clampD(W[4]-(g-3)*W[5]);
+const S0=g=>W[g-1];
+const retr=(t,S)=>Math.pow(1+FACTOR*t/S,DECAY);
+const ivlDays=S=>Math.min(MAXIVL,Math.max(1,Math.round(S/FACTOR*(Math.pow(DR,1/DECAY)-1))));
+const nextD=(D,g)=>clampD(W[7]*D0(4)+(1-W[7])*(D-W[6]*(g-3)));
+const recallS=(D,S,R,g)=>S*(Math.exp(W[8])*(11-D)*Math.pow(S,-W[9])*(Math.exp(W[10]*(1-R))-1)*(g===2?W[15]:1)*(g===4?W[16]:1)+1);
+const forgetS=(D,S,R)=>Math.min(S,W[11]*Math.pow(D,-W[12])*(Math.pow(S+1,W[13])-1)*Math.exp(W[14]*(1-R)));
+/* estado da carta: s 0 nova,1 aprendendo,2 revisão,3 reaprendendo */
+function blank(){return {s:0,S:0,D:0,due:0,last:0,reps:0,lapses:0,h:'',cr:0}}
+function schedule(c,g,now){
+  const n={...c};const t=c.last?Math.max(0,(now-c.last)/DAY):0;
+  if(c.s===0){
+    n.D=D0(g);n.S=S0(g);
+    if(g===1){n.s=1;n.due=now+MIN}
+    else if(g===2){n.s=1;n.due=now+10*MIN}
+    else{n.s=2;const gi=ivlDays(S0(3)),ei=Math.max(gi+1,ivlDays(S0(4)));n.due=now+(g===3?gi:ei)*DAY}
+  }else if(c.s===1||c.s===3){
+    n.D=nextD(c.D,g);
+    if(g===1){n.due=now+MIN;if(c.s===3)n.S=Math.min(c.S,forgetS(c.D,c.S,retr(t,c.S||0.1)))}
+    else if(g===2){n.due=now+10*MIN}
+    else{
+      if(c.s===1&&g===3)n.S=Math.max(c.S,S0(2));
+      if(g===4)n.S=Math.max(c.S*2,S0(3));
+      n.s=2;const gi=ivlDays(n.S);n.due=now+(g===4?Math.max(gi,ivlDays(c.S)+1):gi)*DAY;
+    }
+  }else{
+    const R=retr(t,c.S);n.D=nextD(c.D,g);
+    if(g===1){n.S=forgetS(c.D,c.S,R);n.s=3;n.lapses=c.lapses+1;n.due=now+MIN}
+    else{
+      const sh=recallS(c.D,c.S,R,2),sg=recallS(c.D,c.S,R,3),se=recallS(c.D,c.S,R,4);
+      let ih=ivlDays(sh),ig=ivlDays(sg),ie=ivlDays(se);
+      ih=Math.min(ih,ig);ig=Math.max(ig,ih+1);ie=Math.max(ie,ig+1);
+      n.S=g===2?sh:g===3?sg:se;n.due=now+(g===2?ih:g===3?ig:ie)*DAY;
+    }
+  }
+  n.S=Math.round(n.S*1000)/1000;n.D=Math.round(n.D*1000)/1000;
+  n.last=now;n.reps=c.reps+1;n.h=(c.h+g).slice(-40);
+  return n;
+}
+function preview(c,now){return [1,2,3,4].map(g=>schedule(c,g,now).due-now)}
+function fmtIvl(ms){
+  if(ms<HOUR)return Math.max(1,Math.round(ms/MIN))+' min';
+  if(ms<DAY)return Math.round(ms/HOUR)+' h';
+  const d=Math.round(ms/DAY);return d===1?'1 dia':d<31?d+' dias':Math.round(d/30)+' mês'+(d>=60?'es':'');
+}
+const pack=c=>[c.s,c.S,c.D,c.due,c.last,c.reps,c.lapses,c.h,c.cr];
+const unpack=a=>Array.isArray(a)?{s:a[0]|0,S:+a[1]||0,D:+a[2]||0,due:+a[3]||0,last:+a[4]||0,reps:a[5]|0,lapses:a[6]|0,h:String(a[7]||''),cr:+a[8]||0}:blank();
+const lastG=c=>c.h?+c.h.slice(-1):0;
+/* elegível para km: nunca contada ou última contagem há 20 h ou mais; independe da nota */
+const ELIG_GAP=20*HOUR;
+const eligible=(c,now)=>!c.cr||now-c.cr>=ELIG_GAP;
+/* prioridade da preparação intensiva (menor = antes) */
+function priority(c,now,mastery){
+  const due=c.s!==0&&c.due<=now;
+  if((c.s===1||c.s===3)&&due)return 0+c.due/1e15;
+  if(c.s!==0&&lastG(c)===1)return 1+(due?0:0.5);
+  if(due)return 2+(c.due/1e15);
+  if(c.s!==0&&lastG(c)===2)return 3;
+  if(c.s===0)return 4+mastery;
+  return 5+(c.s===2?retr(Math.max(0,(now-c.last)/DAY),c.S||0.1):1);
+}
+function mastery(cards,get,now){
+  /* domínio estimado: média da retenção prevista (FSRS) sobre todas as cartas; nova = 0 */
+  if(!cards.length)return 0;let s=0;
+  for(const card of cards){const c=get(card.id);if(c.s===0)continue;s+=c.s===2?retr(Math.max(0,(now-c.last)/DAY),c.S||0.1):0.3}
+  return s/cards.length;
+}
+function buildQueue(cards,get,now,opt){
+  /* opt: {size, subjects:Set|null, mode:'intensive'|'due'|'errors'|'hard'|'new'|'recovery', allowEarly} */
+  const pool=cards.filter(k=>!opt.subjects||opt.subjects.has(k.s));
+  const mast={};
+  for(const s of new Set(pool.map(k=>k.s)))mast[s]=mastery(pool.filter(k=>k.s===s),get,now);
+  const f={
+    intensive:c=>opt.allowEarly!==false||c.s===0||c.due<=now,
+    due:c=>c.s!==0&&c.due<=now,
+    errors:c=>c.s!==0&&(lastG(c)===1||c.lapses>0),
+    hard:c=>c.s!==0&&(lastG(c)===2||c.D>=7),
+    new:c=>c.s===0,
+    recovery:c=>c.s!==0&&(lastG(c)===1||c.lapses>0||lastG(c)===2)
+  }[opt.mode||'intensive'];
+  const list=pool.map(k=>({k,c:get(k.id)})).filter(x=>f(x.c))
+    .map(x=>({id:x.k.id,p:priority(x.c,now,mast[x.k.s]),o:x.k.s+x.k.id}))
+    .sort((a,b)=>a.p-b.p||(a.o<b.o?-1:1));
+  /* intercala matérias entre cartas novas do mesmo nível para não estudar em bloco */
+  const out=[],buckets=new Map();
+  for(const x of list){const lvl=Math.floor(x.p);if(!buckets.has(lvl))buckets.set(lvl,new Map());const m=buckets.get(lvl),s=x.id.split('-')[0];if(!m.has(s))m.set(s,[]);m.get(s).push(x.id)}
+  for(const lvl of [...buckets.keys()].sort((a,b)=>a-b)){
+    const m=buckets.get(lvl);const subj=[...m.keys()].sort((a,b)=>(mast[a]||0)-(mast[b]||0));
+    let any=true;while(any){any=false;for(const s of subj){const a=m.get(s);if(a.length){out.push(a.shift());any=true}}}
+  }
+  return opt.size?out.slice(0,opt.size):out;
+}
+/* vitalidade privada */
+const VIT={1:-10,2:0,3:5,4:10},VIT_REC={1:2,2:5,3:8,4:10};
+function applyVit(me,g){
+  const rec=!!me.rec;let v=me.vit+(rec?VIT_REC[g]:VIT[g]);let streak=g>=3?(me.streak||0)+1:0;let bonus=false;
+  if(streak>=5){v+=10;streak=0;bonus=true}
+  v=Math.max(0,Math.min(100,v));
+  let r=rec;if(v===0)r=true;if(rec&&v>=40)r=false;
+  return {vit:v,streak,rec:r,bonus,enteredRec:!rec&&r,leftRec:rec&&!r};
+}
+const vitState=v=>v>=80?['cheio','Cheio de energia e disposição']:v>=60?['moderado','Disposição moderada']:v>=40?['cansado','Cansado']:v>=20?['fraco','Enfraquecido']:v>=1?['exausto','Exausto']:['recuperacao','Modo de recuperação'];
+/* quilômetros */
+function kmOf(me){return Math.round(((me.elig||0)/10+(me.bonus||0))*10)/10}
+function kmCompOf(me){return Math.round(((me.eligC||0)/10+(me.bonusC||0))*10)/10}
+/*CORE-END*/
+{
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SUBJ=[
+ {id:'epi',name:'Epidemiologia',c:'#8a4fd6'},{id:'bio',name:'Bioestatística',c:'#2f6fe4'},{id:'af',name:'Alimentos Funcionais',c:'#22a05a'},
+ {id:'cb',name:'Compostos Bioativos',c:'#e07a1f'},{id:'nf',name:'Nutrição Funcional',c:'#d23f6b'},
+ {id:'me',name:'Macronutrientes no Esporte e Recursos Ergogênicos',c:'#c8452c'},{id:'ac',name:'Nutrição Estética — Acne',c:'#1a9fb3'}];
+const SN=Object.fromEntries(SUBJ.map(s=>[s.id,s]));
+const ACTMAP={'Bioestatística':'bio','Epidemiologia':'epi','Alimentos funcionais':'af','Compostos bioativos':'cb','Nutrição funcional':'nf','Nutrição estética – acne':'ac','Macronutrientes no esporte':'me'};
+const SHIRTS=['#c8452c','#2f6fe4','#22a05a','#8a4fd6','#ef8a17','#e2468f','#14a3a3','#3a3f4c'];
+const SKINS=['#f6d3b3','#e8b58e','#c98d63','#9a6440','#6b4428'];
+const HAIRS=['curto','rabo de cavalo','cacheado','raspado'];
+const ACCS=['nenhum','boné','faixa','óculos esportivos'];
+const S={cards:[],byId:{},bySub:{},srs:{},me:null,cfg:null,players:{},myId:null,token:'',acct:null,qcount:null,authMode:'novo',
+  sess:null,drawn:{},prevP:null,closed:false,view:'corrida',loaded:false,draft:{sh:0,sk:1,ha:0,ac:0}};
+for(const s of SUBJ)S.srs[s.id]={};
+const defMe=()=>({vit:100,streak:0,rec:false,elig:0,eligC:0,bonus:0,bonusC:0,log:{},audio:{},best:{},studyMs:0,sess:null,rev:0});
+S.me=defMe();
+
+/* ---------- utilidades ---------- */
+let toastT;function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,3200)}
+const examMs=()=>{const t=Date.parse(S.cfg&&S.cfg.examAt);return isFinite(t)?t:Infinity};
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fk=n=>(Math.round((+n||0)*10)/10).toLocaleString('pt-BR',{maximumFractionDigits:1});
+const fmtKm=k=>fk(k)+' km';
+let syncT;function setSync(st){const e=document.getElementById('hSync');if(!e)return;clearTimeout(syncT);e.hidden=!S.token;e.textContent=st==='saving'?'salvando…':st==='error'?'sem conexão · tentando de novo':'salvo ✓';e.style.background=st==='error'?'#d93a3a':'';}
+const get=id=>unpack(S.srs[id.split('-')[0]][id]);
+function put(id,c){const s=id.split('-')[0];S.srs[s][id]=pack(c);markDirty('srs-'+s)}
+
+/* ---------- corredor ---------- */
+function runnerSVG(av,mood){
+  av=av||{};const sh=SHIRTS[av.sh|0]||SHIRTS[0],sk=SKINS[av.sk|0]||SKINS[1],ha=av.ha|0,ac=av.ac|0;mood=mood||'cheio';
+  const hairC='#2b1d14';
+  const hair=[`<path d="M14 9q0-6 6-6t6 6q-3-2-6-2t-6 2z" fill="${hairC}"/>`,
+    `<path d="M14 9q0-6 6-6t6 6q-3-2-6-2t-6 2z" fill="${hairC}"/><path d="M25 6q6 1 5 8q-2-3-4-4z" fill="${hairC}"/>`,
+    `<circle cx="16" cy="5.5" r="2.6" fill="${hairC}"/><circle cx="20" cy="4" r="3" fill="${hairC}"/><circle cx="24" cy="5.5" r="2.6" fill="${hairC}"/>`,
+    ''][ha]||'';
+  const acc=['',`<path d="M13.5 7.5q6.5-7 13 0z" fill="${sh}"/><path d="M25 7h6" stroke="${sh}" stroke-width="2.4" stroke-linecap="round"/>`,
+    `<rect x="14" y="5.6" width="12" height="2.4" rx="1" fill="#fff"/>`,
+    `<rect x="16" y="8.2" width="9" height="2.6" rx="1.3" fill="#1b1f27"/>`][ac]||'';
+  const face={cheio:'<circle cx="18" cy="9.5" r=".9" fill="#1b1f27"/><circle cx="22.5" cy="9.5" r=".9" fill="#1b1f27"/><path d="M17.5 12q2.6 2.4 5.2 0" stroke="#1b1f27" stroke-width="1" fill="none" stroke-linecap="round"/>',
+    moderado:'<circle cx="18" cy="9.5" r=".9" fill="#1b1f27"/><circle cx="22.5" cy="9.5" r=".9" fill="#1b1f27"/><path d="M18 12.4q2.2 1.2 4.4 0" stroke="#1b1f27" stroke-width="1" fill="none" stroke-linecap="round"/>',
+    cansado:'<path d="M17 9.6h2M21.6 9.6h2" stroke="#1b1f27" stroke-width="1" stroke-linecap="round"/><path d="M18 12.8h4.4" stroke="#1b1f27" stroke-width="1" stroke-linecap="round"/><path d="M26 6q1 2 0 3q-1-1 0-3z" fill="#7cc4ff"/>',
+    fraco:'<path d="M17 10l2-.6M23.6 10l-2-.6" stroke="#1b1f27" stroke-width="1" stroke-linecap="round"/><path d="M18 13.4q2.2-1.4 4.4 0" stroke="#1b1f27" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M26 6q1 2 0 3q-1-1 0-3zM13.6 8q1 2 0 3q-1-1 0-3z" fill="#7cc4ff"/>',
+    exausto:'<path d="M17 9l2 1.2M19 9l-2 1.2M21.6 9l2 1.2M23.6 9l-2 1.2" stroke="#1b1f27" stroke-width=".9" stroke-linecap="round"/><ellipse cx="20.3" cy="13" rx="1.6" ry="1.2" fill="#1b1f27"/><path d="M26 6q1 2 0 3q-1-1 0-3zM13.6 8q1 2 0 3q-1-1 0-3z" fill="#7cc4ff"/>',
+    recuperacao:'<path d="M17 9.8q1 .8 2 0M21.6 9.8q1 .8 2 0" stroke="#1b1f27" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M18.4 12.6q1.8 1 3.6 0" stroke="#1b1f27" stroke-width="1" fill="none" stroke-linecap="round"/>'}[mood]||'';
+  const leg=c=>`<path d="M20 29l0 13" stroke="#232733" stroke-width="4.2" stroke-linecap="round"/><ellipse cx="21.6" cy="43.4" rx="3" ry="1.6" fill="${c}"/>`;
+  const arm=`<path d="M20 18l0 9" stroke="${sk}" stroke-width="3.2" stroke-linecap="round"/>`;
+  const extra=mood==='recuperacao'?'<g><rect x="28" y="24" width="5" height="10" rx="1.5" fill="#7cc4ff" stroke="#2f6fe4"/><rect x="29" y="22" width="3" height="2.4" fill="#2f6fe4"/><text x="31" y="16" font-size="6" font-weight="700" fill="#2f6fe4">z</text></g>':'';
+  return `<svg class="rn m-${mood}" viewBox="0 0 40 50" aria-hidden="true"><ellipse cx="20" cy="46.5" rx="11" ry="2" fill="rgba(0,0,0,.25)"/>
+  <g class="bd"><g class="lb">${leg('#9aa1b2')}</g><g class="ab">${arm}</g>
+  <rect x="15" y="16" width="10" height="14" rx="4" fill="${sh}"/><rect x="17" y="20" width="6" height="5" rx="1" fill="#fff"/><rect x="15.5" y="27" width="9" height="4" rx="1.6" fill="#232733"/>
+  <circle cx="20.3" cy="10" r="6" fill="${sk}"/>${hair}${face}${acc}
+  <g class="lf">${leg('#fff')}</g><g class="af">${arm}</g></g>${extra}
+  <g class="stars"><path d="M8 6l1 2 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2L5 8.3 7 8z" fill="#ffd34d"/><path d="M32 4l.8 1.6 1.7.2-1.2 1.1.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.1 1.7-.2z" fill="#ffd34d"/></g></svg>`;
+}
+
+/* ---------- servidor (Google Apps Script) ---------- */
+const API_URL='https://script.google.com/macros/s/AKfycbwNuuQc6tRiUywK5Hl2xicRZMIHRAnt7wF3I38en3ZeBZnLX9N6lClTv_HzS-6Jahu6/exec';
+const API=(fn,...args)=>{
+  if(window.google&&google.script&&google.script.run)return new Promise((res,rej)=>{google.script.run.withSuccessHandler(r=>r&&r.err?rej(r):res(r)).withFailureHandler(e=>rej({err:'Falha de conexão. Tente de novo.',raw:String(e)}))[fn](...args)});
+  return fetch(window.NQ_API||API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn,args}),redirect:'follow'})
+    .catch(()=>{throw {err:'Falha de conexão. Verifique a internet e tente de novo.'}})
+    .then(r=>r.json().catch(()=>({err:'O servidor respondeu de forma inesperada. Tente de novo.'})))
+    .then(r=>{if(r&&r.err)throw r;return r});
+};
+const TKEY='nq-token';
+function getToken(){try{return localStorage.getItem(TKEY)||''}catch{return ''}}
+function setToken(t){try{t?localStorage.setItem(TKEY,t):localStorage.removeItem(TKEY)}catch{}}
+/* ---------- persistência (privada) ---------- */
+const lsKey=()=>'nq3-'+(S.myId||'anon');
+function saveLocal(){try{localStorage.setItem(lsKey(),JSON.stringify({me:S.me,srs:S.srs}))}catch{}}
+function loadLocal(id){try{return JSON.parse(localStorage.getItem('nq3-'+(id||'anon'))||'null')}catch{return null}}
+const SRVKEYS=['elig','eligC','bonus','bonusC','log'];
+const dirty=new Set();let flushT=null,flushing=false;
+function markDirty(k){dirty.add(k);saveLocal();if(S.token)setSync('saving');clearTimeout(flushT);flushT=setTimeout(flush,1200)}
+async function flush(){
+  if(flushing||!S.token)return;flushing=true;let failed=false;if(dirty.size)setSync('saving');
+  while(dirty.size){const k=dirty.values().next().value;dirty.delete(k);
+    let data;if(k==='me'){data={...S.me};SRVKEYS.forEach(x=>delete data[x])}else data={c:S.srs[k.slice(4)],rev:S.me.rev};
+    try{await API('apiSave',S.token,k,JSON.stringify(data))}
+    catch(e){dirty.add(k);failed=true;console.warn('falha ao salvar',k,e);if(/Sessão expirada/.test(e.err||'')){logout(true)}break}}
+  flushing=false;if(S.token){setSync(failed?'error':'saved');if(failed){clearTimeout(flushT);flushT=setTimeout(flush,6000)}}
+}
+window.addEventListener('pagehide',()=>{saveLocal()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveLocal();flush()}});
+function applySrv(srv){if(!srv)return;const before=kmOf(S.me);S.me.elig=srv.elig;S.me.eligC=srv.eligC;S.me.bonus=srv.bonus;S.me.bonusC=srv.bonusC;S.me.log=srv.log||{};return before}
+async function loadAccount(){
+  S.token=getToken();
+  if(!S.token){const loc=loadLocal('anon');if(loc){S.me={...defMe(),...loc.me};for(const s of SUBJ)S.srs[s.id]={...(loc.srs&&loc.srs[s.id]||{})}}return}
+  try{
+    const r=await API('apiMe',S.token);S.myId=r.id;S.acct={name:r.name,corrida:r.corrida};if(r.av&&r.av.sh!=null)S.draft={...S.draft,...r.av};
+    const remote={me:JSON.parse(r.progress.me||'{}'),srs:{}};let rrev=remote.me.rev|0;
+    SUBJ.forEach(s=>{const j=JSON.parse(r.progress['srs-'+s.id]||'{}');remote.srs[s.id]=j.c||{}});
+    const loc=loadLocal(r.id);
+    const useLoc=loc&&(loc.me&&loc.me.rev|0)>rrev;
+    const pick=useLoc?loc:remote;
+    S.me={...defMe(),...pick.me};for(const s of SUBJ)S.srs[s.id]={...(pick.srs[s.id]||{})};
+    applySrv(r.srv);
+    /* créditos confirmados pelo servidor mandam na elegibilidade */
+    for(const [id,ts] of Object.entries(r.cr||{})){if(id[0]==='_'||!S.byId[id])continue;const c=get(id);if(c.cr!==ts){c.cr=ts;S.srs[id.split('-')[0]][id]=pack(c)}}
+    if(useLoc){markDirty('me');SUBJ.forEach(s=>markDirty('srs-'+s.id))}
+  }catch(e){
+    if(/Sessão expirada/.test(e.err||'')){setToken('');S.token='';toast('Sua sessão expirou. Entre novamente.')}
+    else{S.offline=true;toast('Sem conexão com o servidor. Seu estudo fica salvo neste aparelho.')}
+  }
+}
+function logout(expired){
+  saveLocal();setToken('');S.token='';S.myId=null;S.acct=null;S.me=defMe();for(const s of SUBJ)S.srs[s.id]={};
+  if(expired)toast('Sua sessão expirou. Entre novamente.');renderAll();
+}
+
+/* ---------- quilômetros (calculados no servidor) ---------- */
+function afterKm(before){
+  const k=kmOf(S.me);if(before!=null&&k>before){if(Math.floor(k)>Math.floor(before))toast(`Você completou ${Math.floor(k)} km! Seu corredor avançou.`);clearTimeout(S.rbT);S.rbT=setTimeout(refreshBoard,2500)}
+  renderHeader();
+}
+const RQ=[];let rqBusy=false;
+function queueReview(id){if(!S.token)return;RQ.push(id);pumpReviews()}
+async function pumpReviews(){
+  if(rqBusy)return;rqBusy=true;
+  while(RQ.length){const id=RQ.shift();
+    try{const r=await API('apiReview',S.token,id);const before=applySrv(r.srv);
+      if(r.credited){const c=get(id);c.cr=r.ts;S.srs[id.split('-')[0]][id]=pack(c);markDirty('srs-'+id.split('-')[0])}
+      afterKm(before);if(S.sess&&$('kmLine'))$('kmLine').textContent=kmLineText()}
+    catch(e){if(/Sessão expirada/.test(e.err||'')){RQ.length=0;logout(true);break}setSync('error');RQ.unshift(id);await new Promise(r=>setTimeout(r,4000))}}
+  rqBusy=false;
+}
+function kmLineText(){return S.token?`cada carta elegível vale +0,1 km · você tem ${fmtKm(kmOf(S.me))}`:'entre na sua conta para ganhar km'}
+
+/* ---------- sessões ---------- */
+function startSession(title,ids,mode){
+  if(!ids.length){toast('Não há cartas para essa sessão agora.');return}
+  S.me.sess={title,mode:mode||'',queue:ids.slice(),total:ids.length,credited:[],done:0,startKm:kmOf(S.me),startVit:S.me.vit,startedAt:Date.now(),ratings:[0,0,0,0,0]};
+  S.me.rev++;markDirty('me');openSession();
+}
+function eligibleCount(ids){const now=Date.now();return ids.filter(id=>eligible(get(id),now)).length}
+function kmPreview(ids){return fk(eligibleCount(ids)/10)}
+function openSession(){S.sess=S.me.sess;if(!S.sess)return;$('sess').hidden=false;document.body.style.overflow='hidden';nextCard()}
+function closeSession(save){
+  $('sess').hidden=true;document.body.style.overflow='';
+  if(!save){S.me.sess=null;S.me.rev++;markDirty('me')}
+  S.sess=null;renderAll();
+}
+let revealed=false,shownAt=0;
+function answerHTML(card){
+  return card.a.map(b=>{
+    if(b.tb){const [h,...r]=b.tb;return `<div class="scroll"><table><thead><tr>${h.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${r.map(row=>`<tr>${row.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+    return `<p class="${b.n?'nt':''}">${esc(b.t).replace(/\n/g,'<br>')}</p>`;
+  }).join('');
+}
+function vitColor(v){return v>=60?'#22a05a':v>=40?'#e0b000':v>=20?'#ef8a17':'#d93a3a'}
+function sessHeader(){
+  const s=S.sess,me=S.me;
+  return `<div class="sbar"><div class="grow"><b>${esc(s.title)}</b><div class="note">${s.queue.length} carta${s.queue.length===1?'':'s'} na fila · ${s.done} avaliações · <span id="kmLine">${kmLineText()}</span></div></div>
+  <div class="mini" title="Vitalidade (privada)"><span id="miniR" style="position:relative;display:inline-block">${runnerSVG(myAv(),vitState(me.vit)[0])}</span><div><div class="note" style="font-size:12px">Vitalidade ${me.vit}</div><div class="vbar"><i style="width:${me.vit}%;background:${vitColor(me.vit)}"></i></div></div></div>
+  <button class="sec" id="sPause" type="button">Pausar e sair</button></div>`;
+}
+function myAv(){const p=S.players[S.myId];return p&&p.av&&p.av.sh!=null?p.av:S.draft}
+function nextCard(){
+  const s=S.sess;const box=$('sess');
+  if(!s.queue.length){
+    const km=kmOf(S.me)-s.startKm;const r=s.ratings;
+    box.innerHTML=`<div class="scene"><div class="panel" style="padding:24px;display:grid;gap:10px">
+      <h2>Sessão concluída</h2><p>${s.done} avaliações em ${new Set(s.credited).size} cartas elegíveis. ${km>0?`Você conquistou <b>+${fk(km)} km</b>.`:'Nenhum km novo nesta sessão: as cartas já tinham contado nas últimas 20 h ou a confirmação do servidor ainda está chegando.'}</p>
+      <p class="note">Autoavaliação: Errei ${r[1]} · Difícil ${r[2]} · Bom ${r[3]} · Fácil ${r[4]}. Isso orienta as próximas revisões, não é uma nota.</p>
+      <div class="btns"><button type="button" id="sDone">Voltar</button></div></div></div>`;
+    $('sDone').onclick=()=>closeSession(false);return;
+  }
+  const id=s.queue[0];const card=S.byId[id];
+  if(!card){s.queue.shift();return nextCard()}
+  revealed=false;shownAt=Date.now();
+  const c=get(id);const st=c.s===0?'Nova':c.s===2?(c.due>Date.now()?'Revisão antecipada':'Revisão'):'Reaprendendo';
+  const rec=S.me.rec||s.mode==='recovery';
+  const rel=rec?S.bySub[card.s].filter(k=>k.a2===card.a2&&k.id!==id).slice(0,3):[];
+  box.innerHTML=sessHeader()+`<div class="scene"><div class="flip" id="flip">
+    <div class="face front" id="front" tabindex="0" role="button" aria-label="Virar a carta"><div class="tagl"><span style="color:${SN[card.s].c}">${esc(SN[card.s].name)}</span><span>${esc(card.a2)}</span><span>${st}</span><span>${esc(card.id)}</span></div>
+      <div class="q">${esc(card.q)}</div><p class="note" style="margin:0">Formule sua resposta mentalmente antes de virar. Toque na carta para revelar.</p>
+      <div><button type="button" id="reveal">Revelar resposta</button> <span class="note kbd">ou barra de espaço</span></div></div>
+    <div class="face back" id="back"><div class="tagl"><span style="color:${SN[card.s].c}">${esc(SN[card.s].name)}</span><span>${esc(card.a2)}</span></div>
+      <div style="font-weight:700">${esc(card.q)}</div><div class="ans">${answerHTML(card)}</div>
+      ${rel.length?`<div class="related"><b>Para retomar o assunto “${esc(card.a2)}”, veja também:</b><ul style="margin:4px 0 0;padding-left:18px">${rel.map(k=>`<li>${esc(k.q)}</li>`).join('')}</ul></div>`:''}
+    </div></div></div>
+    <div class="rates" id="rates" hidden></div>`;
+  fitFlip();
+  $('front').onclick=reveal;$('reveal').onclick=e=>{e.stopPropagation();reveal()};
+  $('sPause').onclick=()=>{S.me.rev++;markDirty('me');flush();closeSession(true);toast('Sessão salva. Continue quando quiser.')};
+}
+function fitFlip(){const f=$('flip');if(!f)return;const h=Math.max($('front').scrollHeight,$('back').scrollHeight,360);f.style.minHeight=Math.min(h,window.innerHeight*1.6)+'px'}
+function reveal(){
+  if(revealed||!S.sess)return;revealed=true;$('flip').classList.add('on');
+  const id=S.sess.queue[0];const c=get(id);const pv=preview(c,Date.now());
+  const L=[['ERREI','Não lembrei ou errei'],['DIFÍCIL','Parcial ou com muito esforço'],['BOM','Certo, mas precisei pensar'],['FÁCIL','Certo, com segurança']];
+  const r=$('rates');r.hidden=false;
+  r.innerHTML=L.map((l,i)=>`<button type="button" class="g${i+1}" data-g="${i+1}" title="${l[1]}">${l[0]}<small>${fmtIvl(pv[i])}</small></button>`).join('');
+  r.querySelectorAll('button').forEach(b=>b.onclick=()=>rate(+b.dataset.g));
+  setTimeout(fitFlip,50);r.querySelector('button').focus({preventScroll:true});
+}
+function rate(g){
+  const s=S.sess;if(!s||!revealed)return;revealed=false;
+  const id=s.queue.shift();const now=Date.now();const c=get(id);const before=kmOf(S.me);
+  const el=eligible(c,now)&&!s.credited.includes(id);
+  const n=schedule(c,g,now);n.cr=c.cr;
+  put(id,n);
+  if(el){s.credited.push(id);queueReview(id)}
+  const v=applyVit(S.me,g);S.me.vit=v.vit;S.me.streak=v.streak;S.me.rec=v.rec;
+  S.me.studyMs=(S.me.studyMs||0)+Math.min(now-shownAt,120000);
+  s.done++;s.ratings[g]++;
+  if(n.due-now<=20*MIN){const pos=Math.min(s.queue.length,g===1?3:6);s.queue.splice(pos,0,id)}
+  S.me.rev++;markDirty('me');
+  const mini=$('miniR');if(mini){mini.classList.remove('hit','cheer');void mini.offsetWidth;mini.classList.add(g===1?'hit':g>=3?'cheer':'x')}
+  if(v.bonus)toast('Sequência de 5! +10 de vitalidade.');
+  if(v.enteredRec)toast('Vitalidade zerada: modo de recuperação ativado. Seus km continuam intactos.');
+  if(v.leftRec)toast('Energia recuperada! Saindo do modo de recuperação.');
+  afterKm(before);
+  setTimeout(nextCard,g===1?520:300);
+}
+document.addEventListener('keydown',e=>{
+  if($('sess').hidden||!S.sess)return;if(e.target.matches('input,textarea,select'))return;
+  if(!revealed&&(e.key===' '||e.key==='Enter')&&document.activeElement?.tagName!=='BUTTON'){e.preventDefault();reveal()}
+  else if(!revealed&&e.key===' '){e.preventDefault();reveal()}
+  else if(revealed&&['1','2','3','4'].includes(e.key)){e.preventDefault();rate(+e.key)}
+});
+
+/* ---------- estatísticas ---------- */
+function stats(sid){
+  const list=sid?S.bySub[sid]:S.cards;const now=Date.now();let st=0,due=0,err=0,hard=0;
+  for(const k of list){const c=get(k.id);if(c.s!==0){st++;if(c.due<=now)due++;const lg=+c.h.slice(-1);if(lg===1)err++;if(lg===2)hard++}}
+  return {total:list.length,st,nw:list.length-st,due,err,hard,dom:mastery(list,get,now)};
+}
+
+/* ---------- render: cabeçalho ---------- */
+function renderHeader(){
+  $('hKm').textContent=fmtKm(kmOf(S.me));
+  const end=examMs(),now=Date.now();let t;
+  if(!S.cfg)t='prova não configurada';else if(!isFinite(end))t='sem data de prova';else if(now>=end)t='competição encerrada';
+  else{const s=Math.floor((end-now)/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);t=`prova em ${d?d+'d ':''}${h}h ${String(m).padStart(2,'0')}min`}
+  $('hClock').textContent=t;
+  const c=now>=end;if(c!==S.closed){S.closed=c;renderRace()}
+}
+
+/* ---------- render: corrida ---------- */
+const ZONES=[{to:10,n:'Cidade',sky:'#cfe3fb',g:'#8fb0d1',d:'city'},{to:25,n:'Parque',sky:'#dff3d6',g:'#7fbf6a',d:'tree'},{to:50,n:'Litoral',sky:'#ffe9c7',g:'#f1cf8f',d:'wave'},{to:100,n:'Serra',sky:'#e5ddff',g:'#a99bd8',d:'mount'},{to:1e9,n:'Estratosfera do saber',sky:'#1c2147',g:'#2b3170',d:'star',dark:1}];
+const DECO={city:'<rect x="4" y="34" width="14" height="40" fill="%23a9c2dc"/><rect x="22" y="20" width="12" height="54" fill="%2396b3d2"/><rect x="38" y="40" width="18" height="34" fill="%23b6cce3"/>',
+ tree:'<rect x="14" y="52" width="4" height="22" fill="%23806040"/><circle cx="16" cy="46" r="12" fill="%235fa84f"/><circle cx="44" cy="54" r="8" fill="%236fb85c"/>',
+ wave:'<circle cx="46" cy="22" r="9" fill="%23ffc861"/><path d="M0 64q8-8 16 0t16 0 16 0 16 0v20H0z" fill="%2367b7e0"/>',
+ mount:'<path d="M0 74L22 26 44 74z" fill="%238e7fcf"/><path d="M28 74L46 40 64 74z" fill="%237a6bc0"/><path d="M17 37L22 26 27 37z" fill="%23fff"/>',
+ star:'<circle cx="10" cy="14" r="1.4" fill="%23fff"/><circle cx="40" cy="30" r="1" fill="%23fff"/><circle cx="54" cy="10" r="1.6" fill="%23ffd34d"/><circle cx="24" cy="50" r="1.2" fill="%23fff"/>'};
+function playersList(){return Object.entries(S.players).filter(([,p])=>p&&p.name).map(([id,p])=>({id,p,km:Math.max(0,(+p.km)||0)}))}
+function ranked(){
+  const l=playersList().sort((a,b)=>b.km-a.km||String(a.p.name).localeCompare(String(b.p.name)));
+  l.forEach(x=>x.pos=1+l.filter(y=>y.km>x.km).length);return l;
+}
+function renderRace(){
+  const list=ranked();const lead=list[0];const me=list.find(x=>x.id===S.myId);
+  // info
+  let info='';
+  if(me){
+    const ahead=list.filter(x=>x.km>me.km).sort((a,b)=>a.km-b.km)[0];const behind=list.filter(x=>x.km<me.km).sort((a,b)=>b.km-a.km)[0];
+    const tied=list.filter(x=>x.km===me.km&&x.id!==me.id);
+    info=`<div class="panel"><span class="note">Sua posição</span><b>${me.pos}º de ${list.length}</b></div>
+    <div class="panel"><span class="note">Seus km na competição</span><b>${fk(me.km)} km</b></div>
+    <div class="panel"><span class="note">À sua frente</span><b>${ahead?esc(ahead.p.name)+' · +'+fk(ahead.km-me.km)+' km':'Ninguém, você lidera'}</b></div>
+    <div class="panel"><span class="note">Atrás de você</span><b>${behind?esc(behind.p.name)+' · −'+fk(me.km-behind.km)+' km':'Ninguém'}</b>${tied.length?`<span class="note">Lado a lado: ${tied.map(t=>esc(t.p.name)).join(', ')}</span>`:''}</div>`;
+  }else info=`<div class="panel"><span class="note">Líder</span><b>${lead?esc(lead.p.name)+' · '+fk(lead.km)+' km':'—'}</b></div><div class="panel"><span class="note">Corredores</span><b>${list.length}</b></div>`;
+  $('raceInfo').innerHTML=info;
+  // pista
+  const wrap=$('trackWrap'),tr=$('track');
+  if(!list.length){tr.innerHTML='<div style="color:#fff;padding:40px;text-align:center">Ninguém entrou na corrida ainda.</div>';}
+  else{
+    const maxKm=Math.max(...list.map(x=>x.km),0);const trackKm=Math.max(10,Math.ceil((maxKm+4)/5)*5);
+    const ppk=Math.max(56,Math.floor((wrap.clientWidth-90)/trackKm));const W=92+trackKm*ppk+60;const lanes=[...list].sort((a,b)=>(a.p.joinedAt||0)-(b.p.joinedAt||0));
+    const H=86+lanes.length*56;const x=km=>62+km*ppk;
+    let z='',from=0;for(const zn of ZONES){if(from>=trackKm)break;const to=Math.min(zn.to,trackKm);const extra=to>=trackKm?80:0;
+      z+=`<div class="zone${zn.dark?' dark':''}" style="left:${x(from)}px;width:${(to-from)*ppk+extra}px;background:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2286%22>${DECO[zn.d].replace(/"/g,'%22')}</svg>') repeat-x bottom/64px 86px,linear-gradient(${zn.sky},${zn.sky} 70%,${zn.g})"><span class="zn">${esc(zn.n)} · ${from}–${zn.to>1e8?'∞':zn.to} km</span></div>`;from=zn.to}
+    z+=`<div class="zone" style="left:0;width:${x(0)}px;background:${ZONES[0].sky}"></div>`;
+    let m='';const step=ppk>=90?1:ppk>=40?1:5;
+    for(let k=1;k<=trackKm;k+=step)m+=`<div class="km" style="left:${x(k)}px;${k%5?'opacity:.45':''}">${k%5===0||ppk>=90?`<span>${k} km</span>`:''}</div>`;
+    const prev=S.drawn;S.drawn={};
+    const rn=lanes.map((r,i)=>{const from=prev[r.id]!=null?prev[r.id]:r.km;S.drawn[r.id]=r.km;
+      return `<div class="rnr${r.id===S.myId?' me':''}" data-id="${esc(r.id)}" data-km="${r.km}" style="left:${x(from)-22}px;top:${86+i*56+2}px"><span class="tag"><span class="pos">${r.pos}º</span>${esc(r.p.name)} · ${fk(r.km)} km</span>${runnerSVG(r.p.av,'cheio')}</div>`}).join('');
+    tr.style.width=W+'px';tr.style.height=H+'px';
+    tr.innerHTML=z+`<div class="lanes" style="height:${lanes.length*56}px"></div><div class="start" style="left:${x(0)-4}px"></div>`+m+rn;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      tr.querySelectorAll('.rnr').forEach(el=>{const km=+el.dataset.km,id=el.dataset.id;const target=x(km)-22;
+        if(parseFloat(el.style.left)!==target){el.classList.add('run');el.style.left=target+'px';setTimeout(()=>el.classList.remove('run'),1700)}
+        if(S.ovt&&S.ovt[id]){el.classList.add('ovt');setTimeout(()=>el.classList.remove('ovt'),2200)}});
+      S.ovt=null;
+      if(!S.scrolled&&me){S.scrolled=true;wrap.scrollLeft=Math.max(0,x(me.km)-wrap.clientWidth/2)}
+    }));
+  }
+  // ranking
+  $('rank').querySelector('tbody').innerHTML=list.length?list.map(r=>`<tr class="${r.id===S.myId?'me':''}"><td class="n">${r.pos}º</td><td><span class="av">${runnerSVG(r.p.av,'cheio')}</span></td><td><b>${esc(r.p.name)}</b></td><td class="n">${fk(r.km)} km</td><td class="n">${lead&&lead.km>r.km?'−'+fk(lead.km-r.km)+' km':'—'}</td></tr>`).join(''):'<tr><td colspan="5">Ninguém ainda.</td></tr>';
+  $('rankNote').textContent=S.closed?'Classificação final congelada no horário da prova. Critério: quilômetros; empates dividem a posição.':'Critério: quilômetros conquistados até o horário da prova. Empates dividem a mesma posição.';
+  // pódio
+  const pb=$('podiumBox');pb.hidden=!(S.closed&&list.length);
+  if(!pb.hidden){const ord=[1,0,2];$('podium').innerHTML=ord.map(i=>{const r=list[i];return `<div class="st p${i+1}">${r?runnerSVG(r.p.av,'cheio')+`<div class="who">${esc(r.p.name)}<br>${fk(r.km)} km</div>`:'<div class="who">—</div>'}<div class="blk">${r?r.pos:i+1}º</div></div>`}).join('')}
+  renderJoin();renderAdmin();
+}
+function renderJoin(){
+  const box=$('joinBox');
+  if(!S.loaded){box.innerHTML='';return}
+  if(S.acct){
+    box.innerHTML=S.acct.corrida?'':`<div class="panel join"><h3 style="font-size:24px">Você está estudando fora da corrida</h3><p class="note" style="margin:0">Se entrar, a turma vê só seu nome, seu corredor e seus quilômetros.</p><div><button type="button" id="raceOn">Entrar na corrida</button></div></div>`;
+    return;
+  }
+  if($('authBox'))return;
+  const d=S.draft,code=S.urlCode||(location.hash.match(/^#entrar-([A-Za-z0-9]+)$/)||[])[1]||'';
+  const pick=(k,arr,fn)=>`<div class="pick" role="group">${arr.map((v,i)=>`<button type="button" data-k="${k}" data-v="${i}" aria-pressed="${d[k]===i}" aria-label="${esc(fn(v,i))}" style="background:${v}"></button>`).join('')}</div>`;
+  const mode=S.authMode||'novo';
+  box.innerHTML=`<div class="panel join" id="authBox"><div class="btns" style="flex:0 1 auto"><button type="button" class="${mode==='novo'?'':'sec'}" data-auth="novo">Criar conta</button><button type="button" class="${mode==='entrar'?'':'sec'}" data-auth="entrar">Já tenho conta</button></div>
+  ${mode==='entrar'?`<form id="loginF" style="display:grid;gap:12px"><p class="note" style="margin:0">Use o mesmo nome e PIN em qualquer aparelho: seu progresso vem junto.</p>
+    <div class="grid"><label>Nome ou apelido<input id="lName" maxlength="20" required autocomplete="username"></label><label>PIN<input id="lPin" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" required autocomplete="current-password" type="password"></label></div>
+    <p class="msg err" id="lMsg"></p><div><button type="submit">Entrar</button></div><p class="note" style="margin:0">Esqueceu o PIN? Peça ao professor para apagar o seu PIN na planilha; no próximo acesso você define um novo.</p></form>`
+  :`<form id="regF" style="display:grid;gap:12px"><p class="note" style="margin:0">A conta guarda seu progresso no servidor da turma. Escolha um PIN de 4 a 8 números para entrar de outros aparelhos.</p>
+    <div class="grid"><label>Código de convite<input id="jCode" maxlength="12" value="${esc(code)}" required autocomplete="off"></label><label>Nome ou apelido<input id="jName" maxlength="20" minlength="2" required autocomplete="username"></label><label>PIN (4 a 8 números)<input id="jPin" inputmode="numeric" pattern="[0-9]{4,8}" maxlength="8" required autocomplete="new-password" type="password"></label></div>
+    <div class="prev"><span id="pv">${runnerSVG(d,'cheio')}</span><div style="display:grid;gap:8px"><div><div class="note">Camiseta</div>${pick('sh',SHIRTS,(v,i)=>'Cor '+(i+1))}</div><div><div class="note">Tom de pele</div>${pick('sk',SKINS,(v,i)=>'Tom '+(i+1))}</div></div></div>
+    <div class="grid"><label>Cabelo<select id="jHa">${HAIRS.map((h,i)=>`<option value="${i}"${d.ha===i?' selected':''}>${h}</option>`).join('')}</select></label><label>Acessório<select id="jAc">${ACCS.map((h,i)=>`<option value="${i}"${d.ac===i?' selected':''}>${h}</option>`).join('')}</select></label></div>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="jRace" checked style="width:20px;min-height:20px">Participar da corrida (a turma vê só nome, corredor e km)</label>
+    <p class="msg err" id="jMsg"></p><div><button type="submit">Criar conta e começar</button></div></form>`}
+  <p class="note" style="margin:0">Sem conta, você pode estudar normalmente, mas o progresso fica só neste aparelho e não vale km.</p></div>`;
+}
+function renderAdmin(){}
+
+/* ---------- render: estudar ---------- */
+function sessBtn(label,ids,title,mode){const k=kmPreview(ids);return {label,ids,title,mode,k}}
+let BTN=[];
+function btnHTML(b){const i=BTN.push(b)-1;return `<button type="button" data-b="${i}" ${b.ids.length?'':'disabled'} class="${b.cls||''}">${esc(b.label)}<span class="kmhint">${b.ids.length?`${b.ids.length} carta${b.ids.length===1?'':'s'} · até +${b.k} km`:'nada pendente'}</span></button>`}
+function renderStudy(){
+  BTN=[];const now=Date.now();
+  const rb=$('recBanner');
+  rb.innerHTML=S.me.rec?`<div class="banner"><span class="mini">${runnerSVG(myAv(),'recuperacao')}</span><div style="flex:1 1 260px"><b>Modo de recuperação.</b> Seu corredor está sem energia, mas nenhum km foi perdido. Revise as cartas erradas e difíceis: neste modo, toda tentativa devolve energia (Errei +2, Difícil +5, Bom +8, Fácil +10) e o modo termina em 40 de vitalidade. As outras sessões continuam liberadas.</div>${btnHTML({...sessBtn('Sessão de recuperação',buildQueue(S.cards,get,now,{mode:'recovery',size:15}),'Recuperação','recovery')})}</div>`:'';
+  const s=S.me.sess;
+  $('resume').innerHTML=s&&s.queue&&s.queue.length?`<div class="banner" style="border-color:var(--r4)"><div style="flex:1 1 260px"><b>Sessão em andamento:</b> ${esc(s.title)} — ${s.queue.length} cartas restantes.</div><button type="button" id="resumeBtn">Continuar</button><button type="button" class="sec" id="dropBtn">Descartar</button></div>`:'';
+  const I=n=>sessBtn(`Sessão de ${n}`,buildQueue(S.cards,get,now,{size:n}),`Preparação intensiva · ${n} cartas`);
+  $('intBtns').innerHTML=[I(10),I(20),I(30),sessBtn('Todas as matérias (até 100)',buildQueue(S.cards,get,now,{size:100}),'Todas as matérias')].map(btnHTML).join('');
+  $('revBtns').innerHTML=[sessBtn('Pendentes',buildQueue(S.cards,get,now,{mode:'due'}),'Revisões pendentes'),sessBtn('Erros',buildQueue(S.cards,get,now,{mode:'errors'}),'Revisão dos erros'),sessBtn('Difíceis',buildQueue(S.cards,get,now,{mode:'hard'}),'Revisão das difíceis')].map(btnHTML).join('');
+  if(!$('cuSubs').children.length)$('cuSubs').innerHTML=SUBJ.map(x=>`<label style="display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" value="${x.id}" checked style="width:18px;min-height:18px">${esc(x.name)}</label>`).join('');
+  $('subjGrid').innerHTML=SUBJ.map(x=>{const st=stats(x.id);const q=n=>buildQueue(S.cards,get,now,{size:n,subjects:new Set([x.id])});
+    return `<div class="panel subj" style="--c:${x.c}"><h3>${esc(x.name)}</h3>
+    <div class="nums"><span><b>${st.total}</b> perguntas</span><span><b>${st.st}</b> estudadas</span><span><b>${st.due}</b> para revisar</span><span><b>${st.nw}</b> novas</span></div>
+    <div class="bar"><i style="width:${Math.round(st.st/st.total*100)}%"></i></div>
+    <div class="btns">${[sessBtn('10',q(10),x.name+' · 10'),sessBtn('20',q(20),x.name+' · 20'),sessBtn('Tudo pendente',buildQueue(S.cards,get,now,{mode:'due',subjects:new Set([x.id])}),x.name+' · pendentes')].map(b=>btnHTML({...b,cls:'sec'})).join('')}</div></div>`}).join('');
+  if($('resumeBtn')){$('resumeBtn').onclick=openSession;$('dropBtn').onclick=()=>{S.me.sess=null;S.me.rev++;markDirty('me');renderStudy()}}
+  customHint();
+}
+function customIds(){const subs=new Set([...$('cuSubs').querySelectorAll('input:checked')].map(i=>i.value));const n=Math.max(1,Math.min(569,+$('cuN').value|0));return buildQueue(S.cards,get,Date.now(),{size:n,mode:$('cuMode').value,subjects:subs})}
+function customHint(){const ids=customIds();$('cuHint').textContent=`${ids.length} cartas disponíveis · até +${kmPreview(ids)} km`}
+
+/* ---------- render: painel ---------- */
+function renderPanel(){
+  const st=stats();const list=ranked();const meR=list.find(x=>x.id===S.myId);const [vk,vl]=vitState(S.me.vit);
+  $('compBox').innerHTML=`<div class="big" id="bigR">${runnerSVG(myAv(),vk)}</div><div style="flex:1 1 260px;display:grid;gap:6px">
+   <h3 style="font-size:26px">${esc(vl)}</h3><div class="note">Vitalidade (combustível do corredor) · ${S.me.vit}/100 · privada</div>
+   <div class="vbar" style="width:100%;height:14px"><i style="width:${S.me.vit}%;background:${vitColor(S.me.vit)}"></i></div>
+   <p class="small" style="margin:0">Errei −10 · Difícil 0 · Bom +5 · Fácil +10 · cinco Bom/Fácil seguidos +10. A vitalidade não muda seus km e não cai enquanto você descansa.</p></div>`;
+  const aud=SUBJ.filter(x=>S.me.audio[x.id]&&S.me.audio[x.id].done).length;
+  const chal=SUBJ.filter(x=>S.me.log['chal-'+x.id]).length;
+  const h=Math.floor((S.me.studyMs||0)/36e5),m=Math.round((S.me.studyMs||0)%36e5/6e4);
+  const T=[[fmtKm(kmOf(S.me)),'quilômetros acumulados'],[meR?meR.pos+'º':'—',meR?'posição no ranking':'fora da competição'],[Math.round(st.st/st.total*100)+'%','conteúdo estudado'],[Math.round(st.dom*100)+'%','domínio estimado (FSRS)'],
+    [st.total,'flashcards no total'],[st.st,'estudados'],[st.nw,'ainda não estudados'],[st.due,'revisões pendentes'],[st.err,'última nota: Errei'],[st.hard,'última nota: Difícil'],
+    [aud+'/7','audioaulas concluídas'],['—','videoaulas: não disponíveis'],[SUBJ&&(['lucas','beatriz'].filter(k=>S.me.log['case-'+k]).length)+'/2','casos resolvidos sozinho(a)'+((S.me.calc&&S.me.calc.mariana&&S.me.calc.mariana.done)?' · Mariana guiada ✓':'')],[chal+'/7','desafios de matéria'],[`${h}h ${m}min`,'tempo de estudo'],[$('hClock').textContent,'contagem regressiva']];
+  $('tiles').innerHTML=T.map(t=>`<div class="tile"><b>${esc(t[0])}</b><span>${esc(t[1])}</span></div>`).join('');
+  $('subjTable').querySelector('tbody').innerHTML=SUBJ.map(x=>{const s=stats(x.id);return `<tr><td><b style="color:${x.c}">●</b> ${esc(x.name)}</td><td class="n">${s.total}</td><td class="n">${s.st}</td><td class="n">${s.nw}</td><td class="n">${s.due}</td><td class="n">${s.err}</td><td class="n">${s.hard}</td><td class="n">${Math.round(s.dom*100)}%</td></tr>`}).join('');
+  $('leaveBox').innerHTML=S.acct?`<div class="btns" style="flex:0 1 auto">${S.acct.corrida?'<button type="button" class="ghost" id="leaveBtn">Sair da competição (mantém seu estudo)</button>':'<button type="button" class="ghost" id="raceOn">Entrar na corrida</button>'}<button type="button" class="ghost" id="logoutBtn">Sair da conta neste aparelho</button></div><p class="note">Conectado como <b>${esc(S.acct.name)}</b>. Para entrar em outro aparelho, use o mesmo nome e PIN.</p>`:'<p class="note">Você está sem conta: o progresso fica só neste aparelho. Crie uma conta na aba Corrida.</p>';
+}
+
+/* ---------- audioaulas (voz do próprio aparelho) ---------- */
+const plain=card=>card.a.map(b=>b.tb?b.tb.slice(1).map(r=>r.map((v,i)=>v?`${b.tb[0][i]}: ${v}`:'').filter(Boolean).join('; ')).join('. ')+'.':(b.n?'Observação: ':'')+b.t.replace(/\n/g,' ')).join(' ');
+function audioLines(sid){return S.bySub[sid].map(k=>({id:k.id,text:`Pergunta ${k.n}. ${k.q} Resposta: ${plain(k)}`}))}
+const SPEECH=typeof window!=='undefined'&&'speechSynthesis' in window&&'SpeechSynthesisUtterance' in window;
+const AU={sid:null,lines:[],pos:0,state:'idle',rate:1,cont:false,gen:0};
+let ptVoice=null;function pickVoice(){try{const v=speechSynthesis.getVoices();ptVoice=v.find(x=>/pt[-_]BR/i.test(x.lang))||v.find(x=>/^pt/i.test(x.lang))||null}catch{}}
+if(SPEECH){pickVoice();try{speechSynthesis.onvoiceschanged=pickVoice}catch{}}
+function chunksOf(t){const out=[];let cur='';for(const s of t.split(/(?<=[.;:!?])\s+/)){if((cur+' '+s).length>220&&cur){out.push(cur);cur=s}else cur=cur?cur+' '+s:s}if(cur)out.push(cur);
+  return out.flatMap(c=>c.length<=260?[c]:c.match(/.{1,240}(\s|$)/g))}
+function speakLine(i,gen){
+  if(gen!==AU.gen)return;
+  if(i>=AU.lines.length){auFinish();return}
+  AU.pos=i;const a=S.me.audio[AU.sid]=S.me.audio[AU.sid]||{};if(!a.done&&i>(a.pos|0)){a.pos=i;S.me.rev++;markDirty('me')}
+  renderPlayer();
+  const parts=chunksOf(AU.lines[i].text);let k=0;
+  const next=()=>{if(gen!==AU.gen)return;if(k>=parts.length){speakLine(i+1,gen);return}
+    const u=new SpeechSynthesisUtterance(parts[k++]);u.lang='pt-BR';if(ptVoice)u.voice=ptVoice;u.rate=AU.rate;
+    u.onend=next;u.onerror=e=>{if(e.error==='interrupted'||e.error==='canceled')return;next()};speechSynthesis.speak(u)};
+  next();
+}
+function auStart(sid,fromStart){
+  if(!SPEECH)return;speechSynthesis.cancel();AU.gen++;
+  const a=S.me.audio[sid]||{};AU.sid=sid;AU.lines=audioLines(sid);AU.pos=fromStart||a.done?0:Math.min(a.pos|0,AU.lines.length-1);AU.state='speaking';
+  if(S.token)API('apiAudioStart',S.token,sid).catch(()=>{});
+  speakLine(AU.pos,AU.gen);$('player').scrollIntoView({block:'nearest'});
+}
+function auPause(){AU.gen++;speechSynthesis.cancel();AU.state='paused';renderPlayer()}
+function auResume(){AU.state='speaking';AU.gen++;speakLine(AU.pos,AU.gen)}
+function auStop(){AU.gen++;speechSynthesis.cancel();AU.sid=null;AU.state='idle';renderAudio()}
+async function auFinish(){
+  const sid=AU.sid;const a=S.me.audio[sid]=S.me.audio[sid]||{};a.done=true;a.pos=AU.lines.length;S.me.rev++;markDirty('me');
+  AU.sid=null;AU.state='idle';
+  if(S.token){try{const r=await API('apiAudioDone',S.token,sid);const b=applySrv(r.srv);if(r.got)toast('Audioaula concluída: +1 km!');else if(!r.enough)toast('Audioaula concluída. O km vale quando a aula é ouvida no tempo normal.');afterKm(b)}catch{}}
+  const i=SUBJ.findIndex(x=>x.id===sid);
+  if(AU.cont&&SUBJ[i+1]){auStart(SUBJ[i+1].id,false);return}
+  if(S.view==='audio')renderAudio();
+}
+function renderAudio(){
+  const ok=SPEECH;
+  $('ttsWarn').innerHTML=ok?'<span class="small">A narração usa a voz em português do seu próprio aparelho (celular ou computador) e lê o texto do material: não há slides nem avatar. Na maioria dos celulares ela para quando a tela bloqueia; a posição fica salva para continuar depois.</span>'
+    :'<span class="small"><b>Narração indisponível neste navegador.</b> Atualize o navegador ou use Chrome, Edge ou Safari recentes.</span>';
+  $('audioGrid').innerHTML=SUBJ.map(x=>{const a=S.me.audio[x.id]||{};const n=S.bySub[x.id].length;const p=Math.min(n,(a.pos|0));const got=S.me.log&&S.me.log['audio-'+x.id];
+    return `<div class="panel subj" style="--c:${x.c}"><h3>${esc(x.name)}</h3><div class="nums"><span><b>${n}</b> perguntas narradas</span><span>${a.done?`<b>Concluída</b>${got?' (+1 km recebido)':''}`:`<b>${p}</b> de ${n} ouvidas · +1 km ao concluir`}</span></div>
+    <div class="bar"><i style="width:${a.done?100:Math.round(p/n*100)}%"></i></div>
+    <div class="btns"><button type="button" data-au="${x.id}" ${ok?'':'disabled'}>${p&&!a.done?'Continuar':'Ouvir'}</button>${p?`<button type="button" class="sec" data-aur="${x.id}" ${ok?'':'disabled'}>Do início</button>`:''}</div></div>`}).join('');
+  renderPlayer();
+}
+function renderPlayer(){
+  const pl=$('player');if(!AU.sid){pl.hidden=true;return}pl.hidden=false;
+  const line=AU.lines[AU.pos];const n=AU.lines.length;
+  pl.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>${esc(SN[AU.sid].name)} · pergunta ${AU.pos+1} de ${n}</b>
+   <div class="btns" style="flex:0 1 auto"><button type="button" id="auPP">${AU.state==='paused'?'Retomar':'Pausar'}</button><button type="button" class="sec" id="auStop">Parar</button>
+   <label style="display:flex;gap:6px;align-items:center;font-weight:500">Velocidade<select id="auRate" style="width:auto">${[0.75,1,1.25,1.5].map(r=>`<option value="${r}"${AU.rate===r?' selected':''}>${r}×</option>`).join('')}</select></label>
+   <label style="display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="auNext" style="width:18px;min-height:18px" ${AU.cont?'checked':''}>Seguir para a próxima matéria</label></div></div>
+   <div class="bar" style="--c:${SN[AU.sid].c}"><i style="width:${Math.round((AU.pos+1)/n*100)}%"></i></div>
+   <div class="transcript" aria-live="polite">${line?esc(line.text):''}</div>`;
+}
+
+/* ---------- simulado (corrigido no servidor) ---------- */
+function renderSim(){
+  const qc=S.qcount||{all:0};const dayDone=!!(S.me.log&&S.me.log['sim-'+today()]);
+  const need=S.token?'':' <b>Entre na sua conta para fazer o simulado.</b>';
+  let h=`<div class="panel"><h3 style="font-size:24px">Simulado geral</h3><p class="small">${Math.min(20,qc.all)} questões sorteadas entre ${qc.all}. Acertando 80% ou mais: +5 km (uma vez por dia).${need}</p><p class="note">${dayDone?'Bônus de hoje já recebido. Pode treinar à vontade.':'Bônus de hoje disponível.'}${S.me.best.sim!=null?` Melhor resultado: ${S.me.best.sim}%.`:''}</p><button type="button" data-sim="all" ${qc.all&&S.token?'':'disabled'}>Começar simulado<span class="kmhint">${dayDone?'sem bônus hoje':'até +5 km'}</span></button></div>`;
+  h+=SUBJ.map(x=>{const n=qc[x.id]||0;const done=!!(S.me.log&&S.me.log['chal-'+x.id]);return `<div class="panel subj" style="--c:${x.c}"><h3>Desafio final · ${esc(x.name)}</h3><p class="small" style="margin:0">${n} questões objetivas. Com 80% ou mais: +2 km na primeira vez.</p><p class="note" style="margin:0">${done?'Desafio já concluído.':'Ainda não concluído.'}${S.me.best[x.id]!=null?` Melhor: ${S.me.best[x.id]}%.`:''}</p><button type="button" class="sec" data-sim="${x.id}" ${n&&S.token?'':'disabled'}>Fazer desafio<span class="kmhint">${done?'sem bônus':'até +2 km'}</span></button></div>`}).join('');
+  $('simGrid').innerHTML=h;
+}
+let QZ=null;
+async function startQuiz(kind){
+  if(!S.token){toast('Entre na sua conta para fazer o simulado.');return}
+  const q=$('quiz');q.hidden=false;q.innerHTML='<p>Sorteando questões…</p>';
+  try{const r=await API('apiSimStart',S.token,kind);QZ={kind,aid:r.aid,l:r.qs,t:Date.now()};
+    q.innerHTML=`<h3 style="font-size:24px">${kind==='all'?'Simulado geral':'Desafio · '+esc(SN[kind].name)}</h3><form class="qz" id="qzF">${r.qs.map((a,i)=>`<fieldset><legend>${i+1}. ${esc(a.q)}</legend>${a.opts.map((o,j)=>o?`<label class="opt"><input type="radio" name="q${i}" value="${j}" required>${esc(o)}</label>`:'').join('')}<div class="fb"></div></fieldset>`).join('')}
+    <div class="btns"><button type="submit">Corrigir</button><button type="button" class="sec" id="qzX">Fechar</button></div></form>`;
+    q.scrollIntoView({behavior:'smooth',block:'start'});$('qzX').onclick=()=>{q.hidden=true;QZ=null};
+  }catch(e){q.innerHTML=`<p class="msg err">${esc(e.err||'Não foi possível começar.')}</p>`}
+}
+async function gradeQuiz(form){
+  const {kind,l,aid}=QZ;const fd=new FormData(form);const answers=l.map((_,i)=>+fd.get('q'+i));
+  const btn=form.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Corrigindo…';
+  try{const r=await API('apiSimSubmit',S.token,aid,answers);const before=applySrv(r.srv);
+    form.querySelectorAll('fieldset').forEach((fs,i)=>{const right=answers[i]===r.right[i];fs.querySelector('.fb').innerHTML=right?'<span class="right">Correta.</span>':`<span class="wrong">Incorreta.</span> Resposta: ${esc(l[i].opts[r.right[i]]||'')}`});
+    form.querySelectorAll('input').forEach(i=>i.disabled=true);btn.textContent='Corrigido';
+    const key=kind==='all'?'sim':kind;S.me.best[key]=Math.max(S.me.best[key]||0,r.pct);S.me.rev++;markDirty('me');
+    let msg=`${r.ok} de ${r.total} (${r.pct}%).`;
+    if(r.pct>=80)msg+=r.got?' Bônus conquistado!':r.tooFast?' Respondido rápido demais para valer km.':' Bônus já recebido antes.';else msg+=' O bônus exige 80%.';
+    form.insertAdjacentHTML('afterbegin',`<p class="msg ${r.pct>=80?'ok':'err'}">${msg}</p>`);afterKm(before);renderSim();
+  }catch(e){btn.disabled=false;btn.textContent='Corrigir';toast(e.err||'Não foi possível corrigir.')}
+}
+
+/* ---------- laboratório de cálculos ---------- */
+const FORM={
+ mg:{n:'Massa de gordura (MG)',f:'MG = peso × (% gordura ÷ 100)',t:'obrigatória',why:'Converte o percentual de gordura em quilogramas. Dados: peso total e % de gordura.'},
+ mlg:{n:'Massa livre de gordura (MLG)',f:'MLG = peso − MG  ·  ou  peso × (1 − % gordura ÷ 100)',t:'obrigatória',why:'Massa que não é gordura (músculos, ossos, água, órgãos). Entra no GER (Ten Haaf/Cunningham) e é o denominador da DE. Precisa da MG ou do % de gordura.'},
+ gee:{n:'Gasto energético do exercício (GEE)',f:'GEE = MET × peso (kg) × tempo (h)',t:'obrigatória',why:'Usa o peso corporal total, não a MLG. Converta minutos em horas (÷ 60). Com várias modalidades, calcule cada uma e some.'},
+ th:{n:'GER — Ten Haaf (2014)',f:'GER = 484,264 + (22,771 × MLG)',t:'alternativa (a dos casos)',why:'Estimativa de repouso a partir da MLG. É a escolhida pelo professor para o GET. Primeiro multiplique, depois some.'},
+ cu:{n:'GER — Cunningham (1991)',f:'GER = 370 + (21,6 × MLG)',t:'alternativa',why:'Outra estimativa de repouso a partir da MLG. Não some com Ten Haaf: são estimativas alternativas da mesma variável.'},
+ hbm:{n:'GEB — Harris-Benedict, homens',f:'GEB = 66,47 + 13,75 × peso + 5 × altura − 6,76 × idade',t:'alternativa',why:'Usa peso (kg), estatura (cm) e idade (anos). Estima o gasto basal; use só quando a questão pedir.'},
+ hbf:{n:'GEB — Harris-Benedict, mulheres',f:'GEB = 665,1 + 9,56 × peso + 1,85 × altura − 4,68 × idade',t:'alternativa',why:'Mesma lógica, com as constantes da equação feminina.'},
+ get:{n:'Gasto energético total (GET)',f:'GET = (GER × FA) + GEE  [método dos casos]',t:'obrigatória para GET e BE',why:'Use o GER de Ten Haaf, o FA do enunciado e o GEE calculado. Não some o MET. Ressalva do material: no método fatorial (GET = TMB × FA), se o FA já inclui o exercício, somar o GEE conta o exercício duas vezes.'},
+ be:{n:'Balanço energético (BE)',f:'BE = IE − GET',t:'obrigatória para BE',why:'Compara a ingestão com todo o gasto do dia. Negativo = déficit; positivo = superávit.'},
+ de:{n:'Disponibilidade energética (DE)',f:'DE = (IE − GEE) ÷ MLG',t:'obrigatória para DE',why:'Energia que sobra após o exercício, por kg de MLG. Use IE, GEE e MLG do mesmo dia; não use GET nem GER. Primeiro subtraia, depois divida.'}
+};
+const rhs=k=>{const f=FORM[k].f.split('·')[0].split('[')[0];return f.slice(f.indexOf('=')+1).trim()};
+const UNITS=['kg','kcal','kcal/dia','kcal/kg MLG/dia'];
+const CASES={
+ mariana:{nome:'Mariana — corredora de longa distância',modo:'guiado',
+  enun:'Corredora de longa distância, 26 anos, com fadiga, recuperação inadequada, queda de desempenho, irritabilidade e amenorreia há três meses após restrição alimentar e aumento do treino.',
+  dados:[['Sexo / idade / estatura','Feminino / 26 anos / 165 cm'],['Peso / gordura corporal','58 kg / 20%'],['IE / FA','1.900 kcal/dia / 1,8'],['Treino','Corrida, 90 minutos, 9 MET; 6 vezes/semana']],
+  itens:[
+   {id:'mg',t:'Passo 1 — Massa de gordura (MG)',f:'mg',ans:11.6,u:'kg',need:'Peso e % de gordura do enunciado.',sol:'MG = 58 × (20 ÷ 100) = 58 × 0,20 = 11,6 kg.',mist:[[20,'Você usou o percentual como se fosse quilograma. Converta: 58 × 0,20.'],[46.4,'Esse é o valor da MLG, não da MG.']]},
+   {id:'mlg',t:'Passo 2 — Massa livre de gordura (MLG)',f:'mlg',ans:46.4,u:'kg',need:'Peso e a MG do passo 1.',sol:'MLG = 58 − 11,6 = 46,4 kg. A segunda expressão (58 × 0,80) chega ao mesmo resultado; escolha uma.',mist:[[38,'Você subtraiu a porcentagem (20) diretamente do peso. Primeiro converta o % em kg (MG = 11,6 kg).'],[11.6,'Esse é o valor da MG.']]},
+   {id:'gee',t:'Passo 3 — Gasto energético do exercício (GEE)',f:'gee',ans:783,u:'kcal',need:'MET, peso total e tempo em horas (90 ÷ 60 = 1,5 h).',sol:'90 ÷ 60 = 1,5 h. GEE = 9 × 58 × 1,5 = 783 kcal na sessão. Método didático do professor: estima o gasto bruto da sessão; na prática, a DE costuma usar o gasto acima do repouso, para não contar esse componente duas vezes.',mist:[[46980,'Você usou o tempo em minutos. Divida por 60: 90 min = 1,5 h.'],[626.4,'Você usou a MLG. O GEE usa o peso corporal total (58 kg).'],[9,'Esse é o MET, não o GEE.']]},
+   {id:'th',t:'Passo 4a — GER por Ten Haaf',f:'th',ans:1540.84,u:'kcal/dia',need:'MLG do passo 2.',sol:'GER = 484,264 + (22,771 × 46,4) = 1.540,84 kcal/dia. É a referência escolhida pelo professor para o GET.',mist:[[1372.24,'Esse é o resultado de Cunningham.'],[2913.08,'Você somou Ten Haaf e Cunningham. São estimativas alternativas: escolha uma.']]},
+   {id:'cu',t:'Passo 4b — GER por Cunningham (comparação)',f:'cu',ans:1372.24,u:'kcal/dia',need:'MLG do passo 2.',sol:'GER = 370 + (21,6 × 46,4) = 1.372,24 kcal/dia. Diferença de 168,60 kcal/dia em relação a Ten Haaf: não é energia adicional, as equações têm coeficientes e populações de origem distintos.',mist:[[1540.84,'Esse é o resultado de Ten Haaf.']]},
+   {id:'get',t:'Passo 5 — Gasto energético total (GET)',f:'get',ans:3556.51,u:'kcal/dia',need:'GER de Ten Haaf (passo 4a), FA = 1,8 e GEE (passo 3).',sol:'GET = (1.540,84 × 1,8) + 783 = 3.556,51 kcal/dia. Atenção: no método fatorial (slide 45), GET = TMB × FA; se o FA já incluir o exercício, somar o GEE causa dupla contagem.',mist:[[2773.51,'Faltou somar o GEE (783 kcal).'],[2782.51,'Você somou o MET (9) em vez do GEE (783 kcal).'],[3253.03,'Você usou Cunningham. Nos casos, o GET usa o GER de Ten Haaf.']]},
+   {id:'be',t:'Passo 6 — Balanço energético (BE)',f:'be',ans:-1656.51,u:'kcal/dia',need:'IE do enunciado e GET do passo 5.',sol:'BE = 1.900 − 3.556,51 = −1.656,51 kcal/dia pelo método dos casos. Negativo indica déficit.',mist:[[1656.51,'O sinal está invertido: BE = IE − GET, e a IE é menor que o GET.']]},
+   {id:'de',t:'Passo 7 — Disponibilidade energética (DE)',f:'de',ans:24.07,u:'kcal/kg MLG/dia',need:'IE, GEE (passo 3) e MLG (passo 2). Não use GET nem GER.',sol:'Primeiro 1.900 − 783 = 1.117 kcal. Depois 1.117 ÷ 46,4 = 24,07 kcal/kg MLG/dia.',mist:[[19.26,'Você dividiu pelo peso total. O denominador da DE é a MLG (46,4 kg).'],[-35.7,'Você usou o GET. A DE usa só IE − GEE.'],[7.74,'Você usou o GER. A DE usa só IE − GEE.'],[1117,'Faltou dividir pela MLG.']]},
+  ],
+  textos:[{t:'Passo 8 — Interpretar e propor a conduta',a:'A aula apresenta 45 kcal/kg MLG/dia como referência histórica de adequação em mulheres e menos de 30 como referência de baixa DE. Em homens, menciona valores de 9 a 25 em estudos específicos. Nenhum desses valores é um ponto de corte diagnóstico universal.\n\nMariana apresenta 24,07 e sinais compatíveis com baixa DE problemática: amenorreia, fadiga, pior recuperação e queda de rendimento. Investigar REDs, sem concluir o diagnóstico apenas pela DE. Avaliar histórico alimentar, menstrual, treino, lesões, exames e outras causas clínicas.\n\nPrioridades: ampliar a ingestão energética conforme a carga; organizar refeições e carboidratos antes, durante e após o treino, com proteínas e demais nutrientes adequados; monitorar recuperação e função menstrual, encaminhar à avaliação médica e discutir carga com a equipe.'}]
+ },
+ lucas:{nome:'Lucas — jogador de futebol',modo:'livre',
+  enun:'Jogador profissional de futebol, meio-campista, 23 anos. Nas últimas oito semanas, aumentou a carga de treino sem ajustar a alimentação. Relata cansaço excessivo, menor força, dificuldade de concentração, recuperação inadequada, diminuição da libido e menor frequência de ereções matinais.',
+  dados:[['Sexo / idade / altura','Masculino / 23 anos / 180 cm'],['Peso / gordura corporal','76 kg / 12%'],['IE / FA','2.600 kcal/dia / 2,0 (hipotético)'],['Treino','Futebol: 120 min, 7 MET (didático), 6 vezes/semana']],
+  itens:[
+   {id:'mg',t:'1a. MG',f:'mg',ans:9.12,u:'kg',sol:'MG = 76 × 0,12 = 9,12 kg.',mist:[[12,'Você usou o percentual como quilograma.']]},
+   {id:'mlg',t:'1b. MLG',f:'mlg',ans:66.88,u:'kg',sol:'MLG = 76 − 9,12 = 66,88 kg.',mist:[[64,'Você subtraiu a porcentagem (12) direto do peso. Converta antes: MG = 9,12 kg.']]},
+   {id:'gee',t:'2. GEE da sessão',f:'gee',ans:1064,u:'kcal',sol:'120 ÷ 60 = 2 h. GEE = 7 × 76 × 2 = 1.064 kcal.',mist:[[63840,'Tempo em minutos: divida por 60 (120 min = 2 h).'],[936.32,'Você usou a MLG; o GEE usa o peso total.']]},
+   {id:'th',t:'3a. GER por Ten Haaf',f:'th',ans:2007.19,u:'kcal/dia',sol:'Ten Haaf = 484,264 + (22,771 × 66,88) = 2.007,19 kcal/dia.',mist:[[1814.61,'Esse é o resultado de Cunningham.'],[3821.8,'Você somou duas equações alternativas.']]},
+   {id:'cu',t:'3b. GER por Cunningham',f:'cu',ans:1814.61,u:'kcal/dia',sol:'Cunningham = 370 + (21,6 × 66,88) = 1.814,61 kcal/dia.',mist:[[2007.19,'Esse é o resultado de Ten Haaf.']]},
+   {id:'hb',t:'3c. GEB por Harris-Benedict',f:'hbm',ans:1855.99,u:'kcal/dia',sol:'Harris-Benedict (homens) = 66,47 + (13,75 × 76) + (5 × 180) − (6,76 × 23) = 1.855,99 kcal/dia.',mist:[[1617.02,'Você usou a equação feminina; Lucas é homem.']]},
+   {id:'get',t:'4. GET',f:'get',ans:5078.38,u:'kcal/dia',sol:'GET = (2.007,18848 × 2,0) + 1.064 = 5.078,38 kcal/dia.',mist:[[4014.38,'Faltou somar o GEE.'],[4021.38,'Você somou o MET em vez do GEE.'],[4693.22,'Você usou Cunningham; o GET dos casos usa Ten Haaf.']]},
+   {id:'be',t:'Complemento: BE',f:'be',ans:-2478.38,u:'kcal/dia',sol:'BE = 2.600 − 5.078,38 = −2.478,38 kcal/dia, segundo o método didático.',mist:[[2478.38,'Sinal invertido: BE = IE − GET.']]},
+   {id:'de',t:'5. DE',f:'de',ans:22.97,u:'kcal/kg MLG/dia',sol:'DE = (2.600 − 1.064) ÷ 66,88 = 1.536 ÷ 66,88 = 22,97 kcal/kg MLG/dia.',mist:[[20.21,'Você dividiu pelo peso; use a MLG.'],[-37.06,'Você usou o GET; a DE usa IE − GEE.'],[1536,'Faltou dividir pela MLG.']]},
+  ],
+  textos:[
+   {t:'3. Compare as três estimativas',a:'Ten Haaf estimou o maior valor; Cunningham, o menor. As fórmulas usam variáveis, coeficientes e populações de desenvolvimento diferentes. Não some nem tire a média sem indicação do enunciado.'},
+   {t:'5. Interprete a DE considerando a REDs em homens',a:'Valor compatível com suspeita de baixa DE, considerando a faixa descrita na aula para homens (9–25), sem estabelecer diagnóstico.'},
+   {t:'6 e 7. Sinais e efeitos da ingestão insuficiente',a:'Cansaço, perda de força, baixa libido, redução de ereções matinais, dificuldade de concentração e pior recuperação, associados ao aumento da carga sem aumento da ingestão, justificam investigação. A energia insuficiente pode prejudicar reposição de glicogênio, reparação tecidual, adaptações ao treino, função endócrina e rendimento. Avaliar ingestão, carga, sono e saúde, com equipe multidisciplinar.'}]
+ },
+ beatriz:{nome:'Beatriz — triatleta',modo:'livre',
+  enun:'Triatleta amadora de endurance, 30 anos. Treina natação, ciclismo e corrida, inclusive sessões combinadas. Tem dificuldade para organizar a alimentação e falta de apetite após treinos longos. Apresenta fadiga, maior percepção de esforço e queda de rendimento, sem irregularidade menstrual ou lesão óssea recente relatada.',
+  dados:[['Sexo / idade / altura','Feminino / 30 anos / 170 cm'],['Peso / gordura corporal','64 kg / 18%'],['IE / FA / frequência','2.800 kcal/dia / 2,1 (hipotético) / 6 dias por semana'],['Natação','45 min · 8 MET'],['Ciclismo','90 min · 10 MET'],['Corrida','45 min · 9 MET']],
+  itens:[
+   {id:'mlg',t:'1. MLG',f:'mlg',ans:52.48,u:'kg',sol:'MG = 64 × 0,18 = 11,52 kg. MLG = 64 − 11,52 = 52,48 kg.',mist:[[46,'Você subtraiu a porcentagem (18) direto do peso.'],[11.52,'Esse é o valor da MG.']]},
+   {id:'nat',t:'2a. GEE da natação',f:'gee',ans:384,u:'kcal',sol:'8 × 64 × 0,75 = 384 kcal.',mist:[[23040,'Tempo em minutos: 45 min = 0,75 h.'],[314.88,'Você usou a MLG; use o peso total.']]},
+   {id:'cic',t:'2b. GEE do ciclismo',f:'gee',ans:960,u:'kcal',sol:'10 × 64 × 1,5 = 960 kcal.',mist:[[57600,'Tempo em minutos: 90 min = 1,5 h.'],[787.2,'Você usou a MLG; use o peso total.']]},
+   {id:'cor',t:'2c. GEE da corrida',f:'gee',ans:432,u:'kcal',sol:'9 × 64 × 0,75 = 432 kcal.',mist:[[25920,'Tempo em minutos: 45 min = 0,75 h.'],[354.24,'Você usou a MLG; use o peso total.']]},
+   {id:'gee',t:'3. GEE total da sessão',f:'gee',ans:1776,u:'kcal',sol:'384 + 960 + 432 = 1.776 kcal.',mist:[[106560,'Você somou valores calculados em minutos.']]},
+   {id:'th',t:'4a. GER por Ten Haaf',f:'th',ans:1679.29,u:'kcal/dia',sol:'Ten Haaf = 484,264 + (22,771 × 52,48) = 1.679,29 kcal/dia.',mist:[[1503.57,'Esse é o resultado de Cunningham.'],[3182.85,'Você somou duas equações alternativas.']]},
+   {id:'cu',t:'4b. GER por Cunningham',f:'cu',ans:1503.57,u:'kcal/dia',sol:'Cunningham = 370 + (21,6 × 52,48) = 1.503,57 kcal/dia.',mist:[[1679.29,'Esse é o resultado de Ten Haaf.']]},
+   {id:'get',t:'5. GET',f:'get',ans:5302.5,u:'kcal/dia',sol:'GET = (1.679,28608 × 2,1) + 1.776 = 5.302,50 kcal/dia.',mist:[[3526.5,'Faltou somar o GEE total.'],[4933.49,'Você usou Cunningham; o GET dos casos usa Ten Haaf.']]},
+   {id:'be',t:'Complemento: BE',f:'be',ans:-2502.5,u:'kcal/dia',sol:'BE = 2.800 − 5.302,50 = −2.502,50 kcal/dia, pelo método dos casos.',mist:[[2502.5,'Sinal invertido: BE = IE − GET.']]},
+   {id:'de',t:'6. DE do dia de treino combinado',f:'de',ans:19.51,u:'kcal/kg MLG/dia',sol:'DE = (2.800 − 1.776) ÷ 52,48 = 1.024 ÷ 52,48 = 19,51 kcal/kg MLG/dia.',mist:[[16,'Você dividiu pelo peso; use a MLG.'],[35.06,'Você usou só o ciclismo; use o GEE total das três modalidades.'],[1024,'Faltou dividir pela MLG.']]},
+  ],
+  textos:[
+   {t:'7 a 9. Interpretação e conduta',a:'O valor está abaixo da referência histórica de 30 em mulheres. Fadiga, maior esforço e queda de desempenho justificam investigação. A ausência de alterações menstruais ou lesões não exclui REDs. Avaliar duração da exposição, ingestão habitual, histórico clínico e carga de treinos. A demanda aumenta em dias de sessões longas ou combinadas, reduzindo a DE se a ingestão não acompanhar. Planejar refeições e lanches antes e após treinos, ingestão durante sessões prolongadas e opções práticas conforme tolerância e apetite.'}]
+ }
+};
+function parseNum(s){
+  s=String(s||'').trim().replace(/\s/g,'').replace(/−/g,'-');if(!s)return NaN;
+  if(s.includes('.')&&s.includes(','))s=s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(','))s=s.replace(',','.');
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+  return /^-?\d*\.?\d+$/.test(s)?parseFloat(s):NaN;
+}
+const fmtN=n=>n.toLocaleString('pt-BR',{maximumFractionDigits:2});
+const tolOf=a=>Math.max(0.02,Math.abs(a)*0.003);
+function checkItem(it,st){
+  const v=parseNum(st.v);const r={ok:false,val:false,unit:st.u===it.u,form:st.f===it.f,msg:[]};
+  if(isNaN(v)){r.msg.push('Digite um número (pode usar vírgula).');return r}
+  if(Math.abs(v-it.ans)<=tolOf(it.ans))r.val=true;
+  else{const m=it.mist.find(([x])=>Math.abs(v-x)<=tolOf(x));r.msg.push(m?m[1]:'Resultado diferente do esperado. Confira a fórmula, a substituição e a ordem das operações.')}
+  if(!r.form)r.msg.push(st.f?`Fórmula selecionada: ${FORM[st.f].n}. Esta etapa pede ${FORM[it.f].n}.`:'Selecione a fórmula usada.');
+  if(!r.unit)r.msg.push(st.u?`Unidade: o resultado é expresso em ${it.u}.`:'Informe a unidade.');
+  r.ok=r.val&&r.form&&r.unit;return r;
+}
+/* calculadora segura (sem eval) */
+function calcEval(src){
+  const s=String(src).replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/\s/g,'');
+  const toks=[];let i=0;
+  while(i<s.length){const c=s[i];
+    if(/[0-9.,]/.test(c)){let j=i;while(j<s.length&&/[0-9.,]/.test(s[j]))j++;const n=parseNum(s.slice(i,j));if(isNaN(n))throw 0;toks.push(n);i=j}
+    else if('+-*/()^'.includes(c)){toks.push(c);i++}else throw 0}
+  let p=0;const peek=()=>toks[p],next=()=>toks[p++];
+  const prim=()=>{const t=next();if(t==='(' ){const v=expr();if(next()!==')')throw 0;return v}if(t==='-')return -prim();if(t==='+')return prim();if(typeof t==='number')return t;throw 0};
+  const pow=()=>{let b=prim();if(peek()==='^'){next();return Math.pow(b,pow())}return b};
+  const term=()=>{let v=pow();while(peek()==='*'||peek()==='/'){const o=next(),r=pow();v=o==='*'?v*r:v/r}return v};
+  const expr=()=>{let v=term();while(peek()==='+'||peek()==='-'){const o=next(),r=term();v=o==='+'?v+r:v-r}return v};
+  const v=expr();if(p!==toks.length||!isFinite(v))throw 0;return v;
+}
+const CALC={cur:'mariana',mode:'treino'};
+function cstate(cid){S.me.calc=S.me.calc||{};const c=S.me.calc[cid]=S.me.calc[cid]||{};c.items=c.items||{};c.res=c.res||{};if(S.me.log&&S.me.log['caseview-'+cid])c.viewed=true;return c}
+let calcSaveT;function calcSave(){clearTimeout(calcSaveT);calcSaveT=setTimeout(()=>{S.me.rev++;markDirty('me')},700)}
+function renderCalc(){
+  const cs=CASES[CALC.cur];const st=cstate(CALC.cur);const guided=cs.modo==='guiado';const prova=!guided&&CALC.mode==='prova';
+  $('calcTabs').innerHTML=Object.entries(CASES).map(([k,c])=>{const s=cstate(k);const badge=k==='mariana'?(s.done?' · concluído':''):(S.me.log['case-'+k]?' · resolvido (+3 km)':s.viewed?' · gabarito consultado':'');
+    return `<button type="button" class="${k===CALC.cur?'':'sec'}" data-case="${k}">${esc(c.nome.split(' — ')[0])}<span class="kmhint">${k==='mariana'?'resolução guiada':'resolução independente'}${badge}</span></button>`}).join('');
+  const km=S.me.log['case-'+CALC.cur];
+  let h=`<div class="panel" style="display:grid;gap:10px"><h3 style="font-size:26px">${esc(cs.nome)}</h3><p style="margin:0">${esc(cs.enun)}</p>
+   <div class="scroll"><table><tbody>${cs.dados.map(r=>`<tr><th style="width:40%">${esc(r[0])}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div>`;
+  if(guided)h+=`<p class="note" style="margin:0"><b>Modo Aprendizado.</b> Siga os passos na ordem: cada um diz qual fórmula usar, por quê e quais resultados anteriores são necessários. Tente antes de ver a resolução. A resolução guiada não vale km.</p>`;
+  else h+=`<div class="btns" style="flex:0 1 auto"><button type="button" class="${CALC.mode==='treino'?'':'sec'}" data-cmode="treino">Modo Treinamento<span class="kmhint">corrige cada item com comentário</span></button><button type="button" class="${CALC.mode==='prova'?'':'sec'}" data-cmode="prova">Modo Prova<span class="kmhint">sem dicas, correção ao final</span></button></div>
+   <p class="note" style="margin:0">${km?'Caso já resolvido: os +3 km foram concedidos. Pode refazer para treinar, sem nova recompensa.':st.viewed?'Você consultou o gabarito antes de resolver, então este caso não vale mais km. Ainda pode treinar.':'Acerte todos os itens numéricos (valor, fórmula e unidade) sem consultar o gabarito: +3 km, uma única vez.'}</p>`;
+  h+='</div>';
+  h+=cs.itens.map(it=>{
+    const s=st.items[it.id]||{};const r=st.res[it.id];const showRes=r&&(!prova||st.sub);
+    return `<div class="panel citem" data-it="${it.id}" style="display:grid;gap:8px;border-left:6px solid ${showRes?(r.ok?'var(--r3)':'var(--r1)'):'var(--line)'}">
+     <h4 style="margin:0;font:800 20px 'Barlow Condensed'">${esc(it.t)}</h4>
+     ${guided?`<div class="small"><b>Fórmula:</b> <code>${esc(FORM[it.f].f)}</code><br><b>Por quê:</b> ${esc(FORM[it.f].why)}<br><b>Você vai precisar de:</b> ${esc(it.need)}</div>`:''}
+     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+      <label>Fórmula<select data-k="f"><option value="">Selecione…</option>${Object.entries(FORM).map(([k,f])=>`<option value="${k}"${s.f===k?' selected':''}>${esc(f.n)}</option>`).join('')}</select></label>
+      <label style="grid-column:span 2">Substituição dos valores<input data-k="sub" value="${esc(s.sub||'')}" placeholder="${esc(s.f?rhs(s.f):'Selecione a fórmula primeiro')}" autocomplete="off"></label>
+      <label>Resultado<input data-k="v" value="${esc(s.v||'')}" inputmode="decimal" autocomplete="off"></label>
+      <label>Unidade<select data-k="u"><option value="">Selecione…</option>${UNITS.map(u=>`<option${s.u===u?' selected':''}>${esc(u)}</option>`).join('')}</select></label>
+     </div>
+     <div class="fshow small" ${s.f?'':'hidden'}><b>Fórmula escolhida:</b> <code>${esc(s.f?FORM[s.f].f:'')}</code><br><span class="note">Troque cada termo pelo valor correspondente no campo de substituição.</span></div>
+     <div class="btns" style="flex:0 1 auto">${prova?'':`<button type="button" class="sec" data-chk="${it.id}">Conferir</button>`}${guided||(!prova&&st.viewed)||(prova&&st.sub)?`<button type="button" class="ghost" data-sol="${it.id}">${s.showSol?'Ocultar resolução':'Mostrar resolução'}</button>`:''}</div>
+     ${showRes?`<p class="msg ${r.ok?'ok':'err'}" style="margin:0">${r.ok?'Correto: valor, fórmula e unidade.':r.msg.map(esc).join(' ')}</p>`:''}
+     ${s.showSol?`<div class="small" style="background:var(--chip);border-radius:10px;padding:10px"><b>Resolução:</b> ${esc(it.sol)}</div>`:''}
+    </div>`}).join('');
+  if(prova)h+=`<div class="btns" style="flex:0 1 auto"><button type="button" id="calcSubmit" ${st.sub?'disabled':''}>Entregar e corrigir</button>${st.sub?'<button type="button" class="sec" id="calcRedo">Refazer</button>':''}</div>`;
+  h+=`<div class="panel" style="display:grid;gap:8px"><h4 style="margin:0;font:800 20px 'Barlow Condensed'">Questões discursivas</h4><p class="note" style="margin:0">Escreva sua resposta e depois compare com o gabarito comentado do material. Não há correção automática para texto.</p>
+   ${cs.textos.map((t,i)=>`<label>${esc(t.t)}<textarea data-txt="${i}">${esc((st.txt||{})[i]||'')}</textarea></label>`).join('')}
+   ${guided||st.viewed||S.me.log['case-'+CALC.cur]?`<details open><summary style="font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center">Gabarito comentado</summary>${cs.textos.map(t=>`<p class="small"><b>${esc(t.t)}:</b><br>${esc(t.a).replace(/\n/g,'<br>')}</p>`).join('')}</details>`
+     :`<button type="button" class="ghost" id="calcGab">Ver gabarito completo${CALC.cur!=='mariana'?' (faz perder os +3 km se o caso ainda não foi resolvido)':''}</button>`}</div>`;
+  $('calcCase').innerHTML=h;
+  $('calcDraft').value=st.draft||'';
+}
+function calcAllOk(cid){const cs=CASES[cid],st=cstate(cid);return cs.itens.every(it=>st.res[it.id]&&st.res[it.id].ok)}
+function calcMaybeAward(cid){
+  const cs=CASES[cid],st=cstate(cid);if(cs.modo==='guiado'){if(calcAllOk(cid)&&!st.done){st.done=true;toast('Caso de Mariana concluído. Agora tente Lucas e Beatriz sozinho(a).')}return}
+  if(calcAllOk(cid)&&!st.viewed&&S.token&&!(S.me.log&&S.me.log['case-'+cid])){
+    API('apiCaseSubmit',S.token,cid,st.items).then(r=>{const b=applySrv(r.srv);if(r.got)toast(`Caso de ${cs.nome.split(' — ')[0]} resolvido: +3 km!`);afterKm(b);renderCalc()}).catch(e=>toast(e.err||'Não foi possível registrar o caso agora.'))}
+  else if(calcAllOk(cid)&&!S.token)toast('Caso resolvido! Entre na sua conta para que os casos valham km.');
+}
+function renderFormulas(){
+  $('calcForm').innerHTML=Object.values(FORM).map(f=>`<div class="panel" style="display:grid;gap:4px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${esc(f.n)}</b><span class="note">${esc(f.t)}</span></div><code style="font-size:15px;overflow-wrap:anywhere">${esc(f.f)}</code><span class="small">${esc(f.why)}</span></div>`).join('');
+}
+document.addEventListener('click',e=>{
+  const c=e.target.closest('[data-case]');if(c){CALC.cur=c.dataset.case;renderCalc();return}
+  const m=e.target.closest('[data-cmode]');if(m){CALC.mode=m.dataset.cmode;renderCalc();return}
+  const k=e.target.closest('[data-chk]');if(k){const st=cstate(CALC.cur);const it=CASES[CALC.cur].itens.find(x=>x.id===k.dataset.chk);st.res[it.id]=checkItem(it,st.items[it.id]||{});calcSave();renderCalc();calcMaybeAward(CALC.cur);return}
+  const so=e.target.closest('[data-sol]');if(so){const st=cstate(CALC.cur);const s=st.items[so.dataset.sol]=st.items[so.dataset.sol]||{};s.showSol=!s.showSol;calcSave();renderCalc();return}
+  if(e.target.id==='calcGab'){const st=cstate(CALC.cur);if(CALC.cur!=='mariana'&&!S.me.log['case-'+CALC.cur]&&!e.target.dataset.sure){e.target.dataset.sure=1;e.target.textContent='Confirmar: ver o gabarito e abrir mão dos +3 km deste caso';return}st.viewed=true;calcSave();renderCalc();if(S.token&&CALC.cur!=='mariana')API('apiCaseViewed',S.token,CALC.cur).then(r=>applySrv(r.srv)).catch(()=>{});return}
+  if(e.target.id==='calcSubmit'){const st=cstate(CALC.cur);for(const it of CASES[CALC.cur].itens)st.res[it.id]=checkItem(it,st.items[it.id]||{});st.sub=true;calcSave();renderCalc();const n=CASES[CALC.cur].itens.filter(it=>st.res[it.id].ok).length;toast(`Correção: ${n} de ${CASES[CALC.cur].itens.length} itens corretos.`);calcMaybeAward(CALC.cur);return}
+  if(e.target.id==='calcRedo'){const st=cstate(CALC.cur);st.items={};st.res={};st.sub=false;calcSave();renderCalc();return}
+  const kb=e.target.closest('[data-key]');if(kb){const i=$('calcIn');const v=kb.dataset.key;
+    if(v==='C')i.value='';else if(v==='⌫')i.value=i.value.slice(0,-1);else if(v==='=')calcRun();else i.value+=v;if(v!=='=')i.focus();return}
+});
+function calcRun(){const i=$('calcIn');try{const v=calcEval(i.value);$('calcOut').textContent='= '+fmtN(Math.round(v*1e6)/1e6);$('calcOut').className='msg ok'}catch{$('calcOut').textContent='Expressão inválida';$('calcOut').className='msg err'}}
+document.addEventListener('input',e=>{
+  const it=e.target.closest('.citem');
+  if(it&&e.target.dataset.k){const st=cstate(CALC.cur);const s=st.items[it.dataset.it]=st.items[it.dataset.it]||{};s[e.target.dataset.k]=e.target.value;if(st.res[it.dataset.it]&&CALC.mode!=='prova')delete st.res[it.dataset.it];calcSave();return}
+  if(e.target.dataset.txt!=null){const st=cstate(CALC.cur);st.txt=st.txt||{};st.txt[e.target.dataset.txt]=e.target.value;calcSave();return}
+  if(e.target.id==='calcDraft'){cstate(CALC.cur).draft=e.target.value;calcSave()}
+});
+document.addEventListener('change',e=>{const it=e.target.closest('.citem');if(it&&e.target.tagName==='SELECT'){const st=cstate(CALC.cur);const s=st.items[it.dataset.it]=st.items[it.dataset.it]||{};s[e.target.dataset.k]=e.target.value;
+  if(e.target.dataset.k==='f'){const box=it.querySelector('.fshow'),sub=it.querySelector('input[data-k=sub]');
+    if(s.f){box.hidden=false;box.querySelector('code').textContent=FORM[s.f].f;sub.placeholder=rhs(s.f);
+      const prev=sub.dataset.auto;if(!sub.value.trim()||sub.value===prev){sub.value=rhs(s.f);sub.dataset.auto=sub.value;s.sub=sub.value}}
+    else{box.hidden=true;sub.placeholder='Selecione a fórmula primeiro'}}
+  calcSave()}});
+document.addEventListener('keydown',e=>{if(e.target.id==='calcIn'&&e.key==='Enter'){e.preventDefault();calcRun()}});
+
+/* ---------- navegação ---------- */
+function route(){
+  let v=(location.hash||'#corrida').slice(1);if(v.startsWith('entrar-'))v='corrida';
+  if(!['corrida','estudar','painel','audio','calculos','simulado'].includes(v))v='corrida';S.view=v;
+  for(const x of ['corrida','estudar','painel','audio','calculos','simulado'])$('v-'+x).hidden=x!==v;
+  document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.dataset.v===v?'page':'false'));
+  renderView();
+}
+function renderView(){if(!S.loaded)return;({corrida:renderRace,estudar:renderStudy,painel:renderPanel,audio:renderAudio,calculos:()=>{renderFormulas();renderCalc()},simulado:renderSim})[S.view]()}
+function renderAll(){renderHeader();renderView()}
+window.addEventListener('hashchange',route);
+
+/* ---------- eventos ---------- */
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-b]');if(b){const x=BTN[+b.dataset.b];if(x)startSession(x.title,x.ids,x.mode);return}
+  const pk=e.target.closest('.pick button');if(pk){S.draft[pk.dataset.k]=+pk.dataset.v;pk.parentNode.querySelectorAll('button').forEach(z=>z.setAttribute('aria-pressed',z===pk));$('pv').innerHTML=runnerSVG(S.draft,'cheio');return}
+  const au=e.target.closest('[data-au]');if(au){auStart(au.dataset.au,false);return}
+  const aur=e.target.closest('[data-aur]');if(aur){auStart(aur.dataset.aur,true);return}
+  if(e.target.id==='auPP'){if(AU.state==='paused')auResume();else auPause();return}
+  if(e.target.id==='auStop'){auStop();return}
+  const au2=e.target.closest('[data-auth]');if(au2){S.authMode=au2.dataset.auth;$('joinBox').innerHTML='';renderJoin();return}
+  if(e.target.id==='raceOn'){e.target.disabled=true;try{await API('apiRace',S.token,true,S.draft);S.acct.corrida=true;toast('Você entrou na pista!');await refreshBoard();renderAll()}catch(err){e.target.disabled=false;toast(err.err||'Não foi possível entrar agora.')}return}
+  if(e.target.id==='logoutBtn'){if(e.target.dataset.sure){await flush();logout(false);toast('Você saiu da conta neste aparelho.')}else{e.target.dataset.sure=1;e.target.textContent='Confirmar saída da conta'}return}
+  const sm=e.target.closest('[data-sim]');if(sm){startQuiz(sm.dataset.sim);return}
+  if(e.target.id==='leaveBtn'){if(e.target.dataset.sure){try{await API('apiRace',S.token,false);S.acct.corrida=false;toast('Você saiu da competição. Seu estudo foi mantido.');await refreshBoard();renderAll()}catch{toast('Não foi possível sair agora.')}}else{e.target.dataset.sure=1;e.target.textContent='Confirmar saída da competição'}return}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='jHa'){S.draft.ha=+e.target.value;$('pv').innerHTML=runnerSVG(S.draft,'cheio')}
+  if(e.target.id==='jAc'){S.draft.ac=+e.target.value;$('pv').innerHTML=runnerSVG(S.draft,'cheio')}
+  if(e.target.id==='auRate'){AU.rate=+e.target.value}
+  if(e.target.id==='auNext')AU.cont=e.target.checked;
+  if(e.target.closest('#custom'))customHint();
+});
+document.addEventListener('input',e=>{if(e.target.id==='cuN')customHint()});
+document.addEventListener('submit',async e=>{
+  const f=e.target;
+  if(f.id==='custom'){e.preventDefault();const ids=customIds();startSession(`Personalizada · ${ids.length} cartas`,ids);return}
+  if(f.id==='qzF'){e.preventDefault();gradeQuiz(f);return}
+  if(f.id==='regF'||f.id==='loginF'){e.preventDefault();const reg=f.id==='regF';const msg=$(reg?'jMsg':'lMsg');msg.textContent='';const btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Aguarde…';
+    try{const r=reg?await API('apiRegister',{codigo:$('jCode').value,nome:$('jName').value,pin:$('jPin').value,av:S.draft,corrida:$('jRace').checked}):await API('apiLogin',{nome:$('lName').value,pin:$('lPin').value});
+      const anon=reg?{me:S.me,srs:S.srs}:null;setToken(r.token);S.myId=r.id;
+      if(reg&&anon){try{localStorage.setItem('nq3-'+r.id,JSON.stringify(anon))}catch{}}
+      await loadAccount();if(reg){S.me.rev++;markDirty('me');SUBJ.forEach(s=>markDirty('srs-'+s.id))}
+      if(location.hash.startsWith('#entrar-'))history.replaceState(null,'',location.pathname+location.search+'#corrida');
+      $('joinBox').innerHTML='';toast(reg?'Conta criada! Bons estudos.':'Bem-vindo(a) de volta!');await refreshBoard();renderAll()}
+    catch(err){btn.disabled=false;btn.textContent=reg?'Criar conta e começar':'Entrar';msg.textContent=err.err||'Não foi possível agora.'}
+    return}
+});
+window.addEventListener('resize',()=>{clearTimeout(S.rz);S.rz=setTimeout(()=>{if(S.view==='corrida')renderRace();fitFlip()},200)});
+
+/* ---------- inicialização ---------- */
+function onPlayers(o){
+  const old=S.prevP;S.players=o;
+  if(old){const ovt={};
+    for(const [a,pa] of Object.entries(o)){const oa=old[a];if(!oa||!(+pa.km>+oa.km))continue;
+      for(const [b,pb] of Object.entries(o)){if(a===b)continue;const ob=old[b];if(!ob)continue;
+        if(+oa.km<=+ob.km&&+pa.km>+pb.km){ovt[a]=1;toast(a===S.myId?`Ultrapassagem! Você passou ${pb.name}.`:b===S.myId?`${pa.name} passou você. Bora recuperar!`:`${pa.name} ultrapassou ${pb.name}.`)}}}
+    S.ovt=ovt}
+  S.prevP=JSON.parse(JSON.stringify(o));
+}
+let boardBusy=false;
+async function refreshBoard(){
+  if(boardBusy)return;boardBusy=true;
+  try{const r=await API('apiBoard');S.cfg=r.cfg;S.qcount=r.qcount;const o={};
+    r.players.forEach(p=>o[p.id]={name:p.name,av:p.av,km:p.km,kmAll:p.kmAll,joinedAt:p.joinedAt});onPlayers(o);S.gotP=true;
+    if(S.acct&&S.myId){S.acct.corrida=!!o[S.myId]}
+    renderHeader();if(S.view==='corrida')renderRace();
+    if(S.view==='simulado'&&!QZ)renderSim();
+  }catch(e){if(S.view==='corrida')$('raceLead').textContent='Sem conexão com a pista agora. Tentando de novo em instantes…'}
+  boardBusy=false;
+}
+(async()=>{
+  try{google.script.url.getLocation(l=>{S.urlCode=String((l.parameter&&l.parameter.codigo)||'').slice(0,12);const v=(l.hash||'').replace('#','');if(v&&!location.hash){location.hash=v}if(S.urlCode&&$('jCode')&&!$('jCode').value)$('jCode').value=S.urlCode})}catch{}
+  route();
+  if(!S.urlCode)S.urlCode=String(new URLSearchParams(location.search).get('codigo')||'').slice(0,12);
+  try{S.cards=window.CARDS||await fetch('perguntas.json').then(r=>r.json())}catch{S.cards=[];toast('Não foi possível carregar as perguntas. Recarregue a página.')}
+  for(const k of S.cards){S.byId[k.id]=k;(S.bySub[k.s]=S.bySub[k.s]||[]).push(k)}
+  await loadAccount();
+  S.loaded=true;renderAll();
+  await refreshBoard();
+  setInterval(()=>{if(!document.hidden)refreshBoard()},20000);
+  setInterval(renderHeader,30000);
+})();
+}
+
+</script>
+</body>
+</html>
